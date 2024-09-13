@@ -1,4 +1,31 @@
 import operations
+import time
+import querysHana as qh
+from sqlalchemy import create_engine, text
+import psycopg2
+from psycopg2 import sql, OperationalError, DatabaseError, ProgrammingError
+import pandas as pd
+
+# Function to query POSTGRES using an open connection and cursor
+def query_postgres(connection, cursor, query):
+    try:
+        # Execute the query
+        cursor.execute(query)
+
+        # Fetch all data
+        data = cursor.fetchall()
+
+        # Get column names
+        columns = [desc[0] for desc in cursor.description]
+
+        # Convert to pandas DataFrame
+        df = pd.DataFrame(data, columns=columns)
+
+        return df
+
+    except (OperationalError, DatabaseError, ProgrammingError) as e:
+        print(f"An error occurred while querying: {e}")
+        return None
 
 # Function to perform farm data insertion
 def insert_farm_data(conn, cursor, df_farms):
@@ -7,6 +34,36 @@ def insert_farm_data(conn, cursor, df_farms):
         operations.store_farm_data(conn, cursor, df_farms)
     else:
         print("No farm data to insert (either query returned None or DataFrame is empty).")
+
+# Function to perform warehouse data insertion
+def insert_warehouse_data(engine, conn, cursor, df_warehouse):
+    if df_warehouse is not None and not df_warehouse.empty:
+        df_warehouse.rename(columns={'WERKS': 'id_sap', 'NAME1': 'name'}, inplace=True)
+        df_warehouse.to_sql('temp_warehouse', engine, if_exists='replace', index=False)
+        print("Temporary table warehouse created")
+        time.sleep(2)  # wait for two seconds before reading the temp table
+        
+        # Query from the temporary warehouse table
+        df_warehouse_temp = query_postgres(conn, cursor, qh.query_warehouse_temp)
+        print("Reading from temp...")
+        operations.store_warehouse_data(conn, cursor, df_warehouse_temp)
+    else:
+        print("No farm data to insert (either query returned None or DataFrame is empty).")
+
+# Function to perform warehouse data insertion
+def insert_crias_ordenes_recepcion_data(engine, conn, cursor, df_crias_ordenes_recepcion):
+    if df_crias_ordenes_recepcion is not None and not df_crias_ordenes_recepcion.empty:
+        df_crias_ordenes_recepcion.to_sql('temp_crias_ordenes_recepcion', engine, if_exists='replace', index=False)
+        print("Temporary table crias_ordenes_recepcion created")
+        time.sleep(2)  # wait for two seconds before reading the temp table
+        
+        # Query from the temporary warehouse table
+        df_crias_ordenes_recepcion_temp = query_postgres(conn, cursor, qh.query_purchase_orders_temp)
+        print("Reading from temp...")
+        operations.store_crias_ordenes_recepcion(conn, cursor, df_crias_ordenes_recepcion_temp)
+    else:
+        print("No farm data to insert (either query returned None or DataFrame is empty).")        
+       
 
 # Function to perform transport data insertion
 def insert_transport_data(conn, cursor, df_transport):

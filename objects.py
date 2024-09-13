@@ -9,6 +9,7 @@ import querysHana as qh
 import psycopg2
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
+from sqlalchemy import create_engine, text
 # Load environment variables from the .env file
 load_dotenv()
 
@@ -28,8 +29,23 @@ pg_user = os.getenv('APP_USER')
 pg_password = os.getenv('APP_PASSWORD')
 pg_database = os.getenv('APP_DATABASE')
 
+
+# Function to check if VPN is already connected
+def is_vpn_connected():
+    vpn_status_command = f"nmcli con show --active | grep '{vpn_name}'"
+    
+    process = subprocess.Popen(vpn_status_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    
+    # If stdout contains any output, the VPN is connected
+    return process.returncode == 0
+
 # Function to connect to VPN using nmcli
 def connect_vpn():
+    if is_vpn_connected():
+        print(f"VPN {vpn_name} is already connected.")
+        return True
+
     print(f"Connecting to VPN: {vpn_name}...")
     vpn_command = f"nmcli con up id '{vpn_name}'"
     
@@ -83,6 +99,7 @@ def query_hana(connection, cursor, query):
 def main():
     # Step 1: Connect to VPN and SAP HANA
     if connect_vpn():
+        time.sleep(1)  # wait 1 seconds
         print("Performing queries")
         hana_connection = None
         hana_cursor = None
@@ -102,18 +119,20 @@ def main():
             df_warehouse = query_hana(hana_connection, hana_cursor, qh.query_warehouse)
             # Query transport data
             df_transport = query_hana(hana_connection, hana_cursor, qh.query_transport)
+            # Query purchase orders data
+            df_purchase_orders = query_hana(hana_connection, hana_cursor, qh.query_purchase_orders)
         finally:
             # Step 2: Disconnect VPN and close SAP HANA connection after all queries
             if hana_cursor:
                 hana_cursor.close()
             if hana_connection:
                 hana_connection.close()
-            disconnect_vpn()
+            # disconnect_vpn()
     else:
         print("Failed to connect to VPN. Exiting.")
         return  # or exit the script if this is the main function
 
-    time.sleep(2)  # wait 2 seconds
+    time.sleep(1)  # wait 1 seconds
 
    # Step 3: Connect to PostgreSQL
     print("Connecting to PostgreSQL...")
@@ -129,14 +148,20 @@ def main():
         )
         cursor = conn.cursor()
 
+        # Create PostgreSQL engine using SQLAlchemy
+        pg_url = f'postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_database}'
+        engine = create_engine(pg_url)
+
         print("Performing Inserts in Parallel")
         
         # Use ThreadPoolExecutor to run inserts in parallel
         with ThreadPoolExecutor(max_workers=32) as executor:
             # Submit tasks to the executor
             futures = [
-                executor.submit(it.insert_farm_data, conn, cursor, df_farms),
-                executor.submit(it.insert_transport_data, conn, cursor, df_transport)
+                executor.submit(it.insert_farm_data, conn, cursor, df_farms), # farms
+                executor.submit(it.insert_transport_data, conn, cursor, df_transport), # transport
+                executor.submit(it.insert_warehouse_data, engine, conn, cursor, df_warehouse), # warehouse
+                executor.submit(it.insert_crias_ordenes_recepcion_data, engine, conn, cursor, df_purchase_orders) # purchase orders
             ]
 
             # Process the results as they complete
@@ -162,4 +187,24 @@ def main():
 if __name__ == "__main__":
     time_start = time.time()
     main()
+
+    # print("Connecting to PostgreSQL...")
+    # hana_connection = None
+    # hana_cursor = None
+    # try:
+    #     # Establish a single SAP HANA connection
+    #     hana_connection = dbapi.connect(
+    #         address=hana_host,
+    #         port=hana_port,
+    #         user=hana_user,
+    #         password=hana_password
+    #     )
+    #     hana_cursor = hana_connection.cursor()
+    #     df = query_hana(hana_connection, hana_cursor, qh.query_purchase_orders)
+    #     print(df)
+    #     if df is not None:
+    #         df.to_excel('query_purchase_orders.xlsx', index=False)
+    # except psycopg2.OperationalError as e:
+    #     print(f"Connection error: {e}")    
+
     print(f"Execution time: {time.time() - time_start:.2f} seconds.")
