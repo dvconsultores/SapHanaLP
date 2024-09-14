@@ -160,6 +160,7 @@ def main():
             futures = [
                 executor.submit(it.insert_farm_data, conn, cursor, df_farms), # farms
                 executor.submit(it.insert_transport_data, conn, cursor, df_transport), # transport
+                executor.submit(it.insert_vendors_data, conn, cursor, df_transport), # vendors
                 executor.submit(it.insert_warehouse_data, engine, conn, cursor, df_warehouse), # warehouse
                 executor.submit(it.insert_crias_ordenes_recepcion_data, engine, conn, cursor, df_purchase_orders) # purchase orders
             ]
@@ -200,10 +201,10 @@ if __name__ == "__main__":
     #         password=hana_password
     #     )
     #     hana_cursor = hana_connection.cursor()
-    #     df = query_hana(hana_connection, hana_cursor, qh.query_purchase_orders)
+    #     df = query_hana(hana_connection, hana_cursor, qh.query_vendors)
     #     print(df)
     #     if df is not None:
-    #         df.to_excel('query_purchase_orders.xlsx', index=False)
+    #         df.to_excel('query_vendors.xlsx', index=False)
     # except psycopg2.OperationalError as e:
     #     print(f"Connection error: {e}")    
 

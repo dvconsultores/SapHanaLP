@@ -59,17 +59,16 @@ query_purchase_orders_temp = """
 SELECT 
     a.orden_compra,
     a.id_sap,
+	a.cant_hembras,
+	a.cant_machos,
     p.id,
-    g.id,
-    a.cant_machos,
-    a.cant_hembras
+    g.id
 FROM 
     temp_crias_ordenes_recepcion a
 INNER JOIN 
     proveedores p ON a."proveedorIdId" = p.id_sap
 INNER JOIN 
     granjas g ON a."granjaIdId" = g.id_sap;
-
 """     
 
 # Purchase Orders in Process

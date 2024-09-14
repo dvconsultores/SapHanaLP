@@ -60,6 +60,7 @@ def insert_crias_ordenes_recepcion_data(engine, conn, cursor, df_crias_ordenes_r
         # Query from the temporary warehouse table
         df_crias_ordenes_recepcion_temp = query_postgres(conn, cursor, qh.query_purchase_orders_temp)
         print("Reading from temp...")
+
         operations.store_crias_ordenes_recepcion(conn, cursor, df_crias_ordenes_recepcion_temp)
     else:
         print("No farm data to insert (either query returned None or DataFrame is empty).")        
@@ -72,3 +73,11 @@ def insert_transport_data(conn, cursor, df_transport):
         operations.store_transports_data(conn, cursor, df_transport)
     else:
         print("No transport data to insert (either query returned None or DataFrame is empty).")
+
+# Function to perform vendors data insertion
+def insert_vendors_data(conn, cursor, df_vendors):
+    if df_vendors is not None and not df_vendors.empty:
+        df_vendors.rename(columns={'LIFNR': 'id_sap', 'NAME1': 'name'}, inplace=True)
+        operations.store_vendors_data(conn, cursor, df_vendors)
+    else:
+        print("No vendors data to insert (either query returned None or DataFrame is empty).")        
