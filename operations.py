@@ -36,7 +36,7 @@ def store_farm_data(conn, cursor, df_farms, batch_size=500):
 def store_warehouse_data(conn, cursor, df, batch_size=500, max_workers=8):
     # Convert the DataFrame rows into a list of tuples for easy insertion
     data = [(record[0], record[1], record[2]) for record in df.itertuples(index=False, name=None)]  # Access fields by index    
-
+    
     try:
         # Prepare the list of ids for the query and avoid executing empty queries
         id_sap_list = df['id_sap'].tolist()

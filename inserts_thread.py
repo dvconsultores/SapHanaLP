@@ -46,6 +46,7 @@ def insert_warehouse_data(engine, conn, cursor, df_warehouse):
         # Query from the temporary warehouse table
         df_warehouse_temp = query_postgres(conn, cursor, qh.query_warehouse_temp)
         print("Reading from temp...")
+        print(df_warehouse_temp)
         operations.store_warehouse_data(conn, cursor, df_warehouse_temp)
     else:
         print("No farm data to insert (either query returned None or DataFrame is empty).")

@@ -187,25 +187,25 @@ def main():
 # Run the main function
 if __name__ == "__main__":
     time_start = time.time()
-    main()
+    # main()
 
-    # print("Connecting to PostgreSQL...")
-    # hana_connection = None
-    # hana_cursor = None
-    # try:
-    #     # Establish a single SAP HANA connection
-    #     hana_connection = dbapi.connect(
-    #         address=hana_host,
-    #         port=hana_port,
-    #         user=hana_user,
-    #         password=hana_password
-    #     )
-    #     hana_cursor = hana_connection.cursor()
-    #     df = query_hana(hana_connection, hana_cursor, qh.query_vendors)
-    #     print(df)
-    #     if df is not None:
-    #         df.to_excel('query_vendors.xlsx', index=False)
-    # except psycopg2.OperationalError as e:
-    #     print(f"Connection error: {e}")    
+    print("Connecting to Hana...")
+    hana_connection = None
+    hana_cursor = None
+    try:
+        # Establish a single SAP HANA connection
+        hana_connection = dbapi.connect(
+            address=hana_host,
+            port=hana_port,
+            user=hana_user,
+            password=hana_password
+        )
+        hana_cursor = hana_connection.cursor()
+        df = query_hana(hana_connection, hana_cursor, qh.query_transfer_orders)
+        print(df)
+        if df is not None:
+            df.to_excel('query_transfer_orders.xlsx', index=False)
+    except psycopg2.OperationalError as e:
+        print(f"Connection error: {e}")    
 
     print(f"Execution time: {time.time() - time_start:.2f} seconds.")
