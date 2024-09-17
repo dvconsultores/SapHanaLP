@@ -201,10 +201,10 @@ if __name__ == "__main__":
             password=hana_password
         )
         hana_cursor = hana_connection.cursor()
-        df = query_hana(hana_connection, hana_cursor, qh.query_transfer_orders)
+        df = query_hana(hana_connection, hana_cursor, qh.query_general)
         print(df)
         if df is not None:
-            df.to_excel('query_transfer_orders.xlsx', index=False)
+            df.to_excel('query_general.xlsx', index=False)
     except psycopg2.OperationalError as e:
         print(f"Connection error: {e}")    
 

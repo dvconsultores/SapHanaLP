@@ -116,5 +116,75 @@ WHERE T001W.NAME1 NOT LIKE '%NO USAR%'
   AND EKPO1.AEDAT >= TO_CHAR(CURRENT_DATE, 'YYYY') || '0101'
   AND EKPO1.MATNR = '000000000000120000'
 GROUP BY EKPO1.EBELN, EKPO1.UNIQUEID, EKKO.LIFNR, EKPO1.WERKS, MCHA.CHARG, EKPO1.MENGE, EKPO1.AEDAT;
-
 """
+
+# General consultation
+# query_general = """
+# SELECT
+#     MKPF.MBLNR AS "Número de Documento",
+#     MKPF.BUDAT AS "Fecha del Documento",
+#     MKPF.USNAM AS "Usuario",
+#     MSEG.MATNR AS "Código de Material",
+#     MSEG.WERKS AS "Centro",
+#     MSEG.LGORT AS "Almacén",
+#     MSEG.MENGE AS "Cantidad",
+#     MSEG.MEINS AS "Unidad de Medida",
+#     MSEG.BWART AS "Tipo de Movimiento",
+#     MSEG.CHARG AS "Lote",
+#     MSEG.SGTXT AS "Texto del Movimiento"
+# FROM
+#     SAPHANADB.MSEG
+# JOIN
+#     SAPHANADB.MKPF ON MSEG.MBLNR = MKPF.MBLNR
+#     AND MSEG.MJAHR = MKPF.MJAHR
+# WHERE
+#     -- MSEG.MATNR = '000000000123456789'  -- Reemplaza con el código de material específico
+#     MKPF.BUDAT BETWEEN '20240719' AND '20241231'  -- Rango de fechas
+#     --AND MSEG.WERKS = '4089'  -- Reemplaza con el centro específico
+# ORDER BY
+#     MKPF.BUDAT DESC;
+# """
+
+query_general = """
+SELECT 
+    MATDOC.BUDAT AS "Fecha",
+    MATDOC.MATNR AS "Código de Material",
+    MAKT.MAKTX AS "Descripción de Material",
+    MATDOC.MENGE AS "Cantidad Despachada",
+    MATDOC.WERKS AS "Centro",
+    MATDOC.LGORT AS "Almacén",
+    MATDOC.BWART AS "Tipo de Movimiento",
+    MATDOC.BUKRS AS "Centro de Entrega"  -- Agregado BURKS
+FROM 
+    SAPHANADB.MATDOC
+INNER JOIN 
+    SAPHANADB.MAKT ON MATDOC.MATNR = MAKT.MATNR
+WHERE 
+    MATDOC.BWART = '641'  -- Tipo de movimiento 641
+    AND MATDOC.WERKS = '4089'  -- Centro desde el cual se despachó
+    AND MATDOC.MATNR = '000000000000105025'
+    AND MATDOC.BUDAT >= '20240712'
+ORDER BY 
+    MATDOC.BUDAT ASC;
+"""
+
+
+# SELECT 
+#     SUM(MATDOC.MENGE) AS "Cantidad Despachada"
+# FROM 
+#     SAPHANADB.MATDOC
+# INNER JOIN 
+#     SAPHANADB.MAKT ON MATDOC.MATNR = MAKT.MATNR
+# WHERE 
+#     MATDOC.BWART = '641'  -- Tipo de movimiento 641
+#     AND MATDOC.WERKS = '4089'  -- Centro desde el cual se despachó
+#     AND MATDOC.MATNR = '000000000000105005'
+#     AND MATDOC.BUDAT >= '20240712'
+
+
+# Transferencia de Alimento a granja  
+# 105025
+# 4089
+# Transferencia de huevos a incubadora
+# Transferencia de pollitos bb a granja engorde
+# Transferencia de cria a producción
