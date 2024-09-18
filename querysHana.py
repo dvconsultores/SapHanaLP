@@ -87,64 +87,6 @@ FROM SAPHANADB.LFA1
 """
 
 
-# Equipment
-query_transfer_orders = """
-SELECT *
-FROM SAPHANADB.EKPO EKPO1 --LIMIT 100
-WHERE AEDAT >= TO_CHAR(CURRENT_DATE, 'YYYY') || '0101'
---JOIN MSEG ON MKPF.MBLNR = MSEG.MBLNR
---WHERE MSEG.BWART IN ('301', '311')
---ORDER BY MKPF.BUDAT DESC;
-"""
-
-# 000000000000120000
-query_transfer_orders = """
-SELECT EKPO1.EBELN AS "orden_compra",
-       EKPO1.UNIQUEID AS "id_sap",
-       EKKO.LIFNR AS "proveedorIdId",
-       EKPO1.WERKS AS "granjaIdId",
-       MCHA.CHARG AS "lote", -- Lote from MCHA
-       COALESCE(EKPO1.MENGE, 0) AS "cant",
-       EKPO1.AEDAT
-FROM SAPHANADB.EKPO EKPO1
-INNER JOIN SAPHANADB.T001L ON EKPO1.LGORT = T001L.LGORT
-INNER JOIN SAPHANADB.T001W ON EKPO1.WERKS = T001W.WERKS
-INNER JOIN SAPHANADB.EKKO ON EKPO1.EBELN = EKKO.EBELN
-LEFT JOIN SAPHANADB.MCHA ON EKPO1.MATNR = MCHA.MATNR -- Join with MCHA for batch (lote)
-WHERE T001W.NAME1 NOT LIKE '%NO USAR%'
-  AND T001L.LGOBE NOT LIKE '%NO USAR%'
-  AND EKPO1.AEDAT >= TO_CHAR(CURRENT_DATE, 'YYYY') || '0101'
-  AND EKPO1.MATNR = '000000000000120000'
-GROUP BY EKPO1.EBELN, EKPO1.UNIQUEID, EKKO.LIFNR, EKPO1.WERKS, MCHA.CHARG, EKPO1.MENGE, EKPO1.AEDAT;
-"""
-
-# General consultation
-# query_general = """
-# SELECT
-#     MKPF.MBLNR AS "Número de Documento",
-#     MKPF.BUDAT AS "Fecha del Documento",
-#     MKPF.USNAM AS "Usuario",
-#     MSEG.MATNR AS "Código de Material",
-#     MSEG.WERKS AS "Centro",
-#     MSEG.LGORT AS "Almacén",
-#     MSEG.MENGE AS "Cantidad",
-#     MSEG.MEINS AS "Unidad de Medida",
-#     MSEG.BWART AS "Tipo de Movimiento",
-#     MSEG.CHARG AS "Lote",
-#     MSEG.SGTXT AS "Texto del Movimiento"
-# FROM
-#     SAPHANADB.MSEG
-# JOIN
-#     SAPHANADB.MKPF ON MSEG.MBLNR = MKPF.MBLNR
-#     AND MSEG.MJAHR = MKPF.MJAHR
-# WHERE
-#     -- MSEG.MATNR = '000000000123456789'  -- Reemplaza con el código de material específico
-#     MKPF.BUDAT BETWEEN '20240719' AND '20241231'  -- Rango de fechas
-#     --AND MSEG.WERKS = '4089'  -- Reemplaza con el centro específico
-# ORDER BY
-#     MKPF.BUDAT DESC;
-# """
-
 query_general = """
 SELECT 
     MATDOC.BUDAT AS "Fecha",
@@ -154,7 +96,9 @@ SELECT
     MATDOC.WERKS AS "Centro",
     MATDOC.LGORT AS "Almacén",
     MATDOC.BWART AS "Tipo de Movimiento",
-    MATDOC.BUKRS AS "Centro de Entrega"  -- Agregado BURKS
+    MATDOC.BUKRS AS "Centro de Entrega",  -- Agregado BURKS
+    MATDOC.MBLNR AS "Número de Documento",
+    MATDOC.EBELN AS "Orden de Transferencia"
 FROM 
     SAPHANADB.MATDOC
 INNER JOIN 
@@ -162,29 +106,45 @@ INNER JOIN
 WHERE 
     MATDOC.BWART = '641'  -- Tipo de movimiento 641
     AND MATDOC.WERKS = '4089'  -- Centro desde el cual se despachó
-    AND MATDOC.MATNR = '000000000000105025'
-    AND MATDOC.BUDAT >= '20240712'
+    -- AND MATDOC.MATNR = '000000000000105025'
+    AND MATDOC.BUDAT >= '20240715'
 ORDER BY 
     MATDOC.BUDAT ASC;
 """
 
 
-# SELECT 
-#     SUM(MATDOC.MENGE) AS "Cantidad Despachada"
-# FROM 
-#     SAPHANADB.MATDOC
-# INNER JOIN 
-#     SAPHANADB.MAKT ON MATDOC.MATNR = MAKT.MATNR
-# WHERE 
-#     MATDOC.BWART = '641'  -- Tipo de movimiento 641
-#     AND MATDOC.WERKS = '4089'  -- Centro desde el cual se despachó
-#     AND MATDOC.MATNR = '000000000000105005'
-#     AND MATDOC.BUDAT >= '20240712'
-
 
 # Transferencia de Alimento a granja  
-# 105025
-# 4089
+# MATDOC
+# TIPO DE MOVIMIENTO 641
+# EL ORIGEN SIEMPRE ES ABA
+# FILTROS GRANJA + MOVIMIENTO 641 + MATERIAL 105000 A 105999
+# EN EL ADMINISTRATIVO DEBE ESTAR LA CREACION DEL LOTE
+# SALEN DEL 1000 ABA
+# la orden es Orden de Transferencia
+
+
 # Transferencia de huevos a incubadora
+# MATDOC
+# TIPO DE MOVIMIENTO 641
+# SALEN DE LAS GRANJAS DE PRODUCCION
+# FILTROS GRANJA + MOVIMIENTO 641 + MATERIAL 000000000000115000
+# en app recepcion y distribucion de aves, agregar granja, numero de documento
+
+
 # Transferencia de pollitos bb a granja engorde
+# MATDOC
+# TIPO DE MOVIMIENTO 641
+# SALEN DEL 3000 incubadora
+# FILTROS GRANJA + MOVIMIENTO 641 + MATERIAL 000000000000120000 Y 000000000000120005 , AGREGAR EN EL ADMIN ESA LISTA
+# en app recepcion y distribucion de aves, agregar granja, numero de documento
+
+
 # Transferencia de cria a producción
+
+
+
+
+
+
+
