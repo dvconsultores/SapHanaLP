@@ -1,3 +1,8 @@
+# Developer: Andrés Dominguez
+# GlobalDV C.A
+# Date: 2021-09-15
+# @AllRightsReserved
+
 from hdbcli import dbapi
 from dotenv import load_dotenv
 import os
@@ -121,6 +126,8 @@ def main():
             df_transport = query_hana(hana_connection, hana_cursor, qh.query_transport)
             # Query purchase orders data
             df_purchase_orders = query_hana(hana_connection, hana_cursor, qh.query_purchase_orders)
+            # Query query_transfer_food_farms
+            df_transfer_food_farms = query_hana(hana_connection, hana_cursor, qh.query_transfer_food_farms)
         finally:
             # Step 2: Disconnect VPN and close SAP HANA connection after all queries
             if hana_cursor:
@@ -162,7 +169,8 @@ def main():
                 executor.submit(it.insert_transport_data, conn, cursor, df_transport), # transport
                 executor.submit(it.insert_vendors_data, conn, cursor, df_transport), # vendors
                 executor.submit(it.insert_warehouse_data, engine, conn, cursor, df_warehouse), # warehouse
-                executor.submit(it.insert_crias_ordenes_recepcion_data, engine, conn, cursor, df_purchase_orders) # purchase orders
+                executor.submit(it.insert_crias_ordenes_recepcion_data, engine, conn, cursor, df_purchase_orders), # purchase orders
+                executor.submit(it.insert_transfer_food_farms_data, engine, conn, cursor, df_transfer_food_farms) # transfer food farms
             ]
 
             # Process the results as they complete
@@ -187,25 +195,25 @@ def main():
 # Run the main function
 if __name__ == "__main__":
     time_start = time.time()
-    # main()
+    main()
 
-    print("Connecting to Hana...")
-    hana_connection = None
-    hana_cursor = None
-    try:
-        # Establish a single SAP HANA connection
-        hana_connection = dbapi.connect(
-            address=hana_host,
-            port=hana_port,
-            user=hana_user,
-            password=hana_password
-        )
-        hana_cursor = hana_connection.cursor()
-        df = query_hana(hana_connection, hana_cursor, qh.query_general)
-        print(df)
-        if df is not None:
-            df.to_excel('query_general.xlsx', index=False)
-    except psycopg2.OperationalError as e:
-        print(f"Connection error: {e}")    
+    # print("Connecting to Hana...")
+    # hana_connection = None
+    # hana_cursor = None
+    # try:
+    #     # Establish a single SAP HANA connection
+    #     hana_connection = dbapi.connect(
+    #         address=hana_host,
+    #         port=hana_port,
+    #         user=hana_user,
+    #         password=hana_password
+    #     )
+    #     hana_cursor = hana_connection.cursor()
+    #     df = query_hana(hana_connection, hana_cursor, qh.query_inventories)
+    #     print(df)
+    #     if df is not None:
+    #         df.to_excel('query_inventories.xlsx', index=False)
+    # except psycopg2.OperationalError as e:
+    #     print(f"Connection error: {e}")    
 
     print(f"Execution time: {time.time() - time_start:.2f} seconds.")
