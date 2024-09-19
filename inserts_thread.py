@@ -46,12 +46,12 @@ def insert_warehouse_data(engine, conn, cursor, df_warehouse):
         df_warehouse.rename(columns={'WERKS': 'id_sap', 'NAME1': 'name'}, inplace=True)
         df_warehouse.to_sql('temp_warehouse', engine, if_exists='replace', index=False)
         print("Temporary table warehouse created")
-        time.sleep(2)  # wait for two seconds before reading the temp table
+        time.sleep(3)  # wait for 3 seconds before reading the temp table
         
         # Query from the temporary warehouse table
         df_warehouse_temp = query_postgres(conn, cursor, qh.query_warehouse_temp)
-        print("Reading from temp...")
-        operations.store_warehouse_data(conn, cursor, df_warehouse_temp)
+        print("Reading from temp_warehouse...")
+        operations.store_warehouse_data(conn, cursor, df_warehouse_temp) if len(df_warehouse_temp) > 0 else print("No data to insert.")
     else:
         print("No farm data to insert (either query returned None or DataFrame is empty).")
 
@@ -64,10 +64,9 @@ def insert_crias_ordenes_recepcion_data(engine, conn, cursor, df_crias_ordenes_r
         
         # Query from the temporary warehouse table
         df_crias_ordenes_recepcion_temp = query_postgres(conn, cursor, qh.query_purchase_orders_temp)
-        print(df_crias_ordenes_recepcion_temp)
         print("Reading from temp_crias_ordenes_recepcion...")
 
-        operations.store_crias_ordenes_recepcion(conn, cursor, df_crias_ordenes_recepcion_temp)
+        operations.store_crias_ordenes_recepcion(conn, cursor, df_crias_ordenes_recepcion_temp) if len(df_crias_ordenes_recepcion_temp) > 0 else print("No data to insert.")
     else:
         print("No farm data to insert (either query returned None or DataFrame is empty).")        
        
@@ -99,6 +98,6 @@ def insert_transfer_food_farms_data(engine, conn, cursor, df_transfer_food_farms
         df_transfer_food_farms_temp = query_postgres(conn, cursor, qh.query_transfer_food_temp)
         print("Reading from temp_transf_alimento_granja...")
 
-        operations.store_transferencias_alimento(conn, cursor, df_transfer_food_farms_temp)
+        operations.store_transferencias_alimento(conn, cursor, df_transfer_food_farms_temp) if len(df_transfer_food_farms_temp) > 0 else print("No data to insert.")
     else:
         print("No transfer food data to insert (either query returned None or DataFrame is empty).")         
