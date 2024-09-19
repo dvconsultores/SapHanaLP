@@ -60,12 +60,12 @@ def insert_crias_ordenes_recepcion_data(engine, conn, cursor, df_crias_ordenes_r
     if df_crias_ordenes_recepcion is not None and not df_crias_ordenes_recepcion.empty:
         df_crias_ordenes_recepcion.to_sql('temp_crias_ordenes_recepcion', engine, if_exists='replace', index=False)
         print("Temporary table crias_ordenes_recepcion created")
-        time.sleep(3)  # wait for two seconds before reading the temp table
+        time.sleep(3)  # wait for 3 seconds before reading the temp table
         
         # Query from the temporary warehouse table
         df_crias_ordenes_recepcion_temp = query_postgres(conn, cursor, qh.query_purchase_orders_temp)
         print(df_crias_ordenes_recepcion_temp)
-        print("Reading from temp...")
+        print("Reading from temp_crias_ordenes_recepcion...")
 
         operations.store_crias_ordenes_recepcion(conn, cursor, df_crias_ordenes_recepcion_temp)
     else:
@@ -93,11 +93,11 @@ def insert_transfer_food_farms_data(engine, conn, cursor, df_transfer_food_farms
     if df_transfer_food_farms is not None and not df_transfer_food_farms.empty:
         df_transfer_food_farms.to_sql('temp_transf_alimento_granja', engine, if_exists='replace', index=False)
         print("Temporary table temp_transf_alimento_granja created")
-        time.sleep(3)  # wait for two seconds before reading the temp table
+        time.sleep(3)  # wait for 3 seconds before reading the temp table
         
         # Query from the temporary food transfer
         df_transfer_food_farms_temp = query_postgres(conn, cursor, qh.query_transfer_food_temp)
-        print("Reading from temp...")
+        print("Reading from temp_transf_alimento_granja...")
 
         operations.store_transferencias_alimento(conn, cursor, df_transfer_food_farms_temp)
     else:
