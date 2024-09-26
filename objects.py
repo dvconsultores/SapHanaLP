@@ -104,7 +104,7 @@ def query_hana(connection, cursor, query):
 def main():
     # Step 1: Connect to VPN and SAP HANA
     if connect_vpn():
-        time.sleep(1)  # wait 1 seconds
+        time.sleep(1)  # wait 1 second
         print("Performing queries")
         hana_connection = None
         hana_cursor = None
@@ -139,9 +139,9 @@ def main():
         print("Failed to connect to VPN. Exiting.")
         return  # or exit the script if this is the main function
 
-    time.sleep(1)  # wait 1 seconds
+    time.sleep(1)  # wait 1 second
 
-   # Step 3: Connect to PostgreSQL
+    # Step 3: Connect to PostgreSQL
     print("Connecting to PostgreSQL...")
     conn = None
     cursor = None
@@ -164,14 +164,18 @@ def main():
         # Use ThreadPoolExecutor to run inserts in parallel
         with ThreadPoolExecutor(max_workers=32) as executor:
             # Submit tasks to the executor
-            futures = [
-                executor.submit(it.insert_farm_data, conn, cursor, df_farms), # farms
-                executor.submit(it.insert_transport_data, conn, cursor, df_transport), # transport
-                executor.submit(it.insert_vendors_data, conn, cursor, df_transport), # vendors
-                executor.submit(it.insert_warehouse_data, engine, conn, cursor, df_warehouse), # warehouse
-                executor.submit(it.insert_crias_ordenes_recepcion_data, engine, conn, cursor, df_purchase_orders), # purchase orders
-                executor.submit(it.insert_transfer_food_farms_data, engine, conn, cursor, df_transfer_food_farms) # transfer food farms
-            ]
+            futures = []
+            futures.append(executor.submit(it.insert_farm_data, conn, cursor, df_farms))  # farms
+            time.sleep(3)  # wait for 3 seconds before inserting the next table
+            futures.append(executor.submit(it.insert_transport_data, conn, cursor, df_transport))  # transport
+            time.sleep(3)  # wait for 3 seconds before inserting the next table
+            futures.append(executor.submit(it.insert_vendors_data, conn, cursor, df_transport))  # vendors
+            time.sleep(3)  # wait for 3 seconds before inserting the next table
+            futures.append(executor.submit(it.insert_warehouse_data, engine, conn, cursor, df_warehouse))  # warehouse
+            time.sleep(3)  # wait for 3 seconds before inserting the next table
+            futures.append(executor.submit(it.insert_crias_ordenes_recepcion_data, engine, conn, cursor, df_purchase_orders))  # purchase orders
+            time.sleep(3)  # wait for 3 seconds before inserting the next table
+            futures.append(executor.submit(it.insert_transfer_food_farms_data, engine, conn, cursor, df_transfer_food_farms))  # transfer food farms
 
             # Process the results as they complete
             for future in as_completed(futures):
@@ -212,6 +216,9 @@ if __name__ == "__main__":
     #     df = query_hana(hana_connection, hana_cursor, qh.query_inventories)
     #     print(df)
     #     if df is not None:
+    #         # Convertir la columna 'CANTIDAD_EN_UM_ENTRADA' a numérico
+    #         df['CANTIDAD_EN_UM_ENTRADA'] = pd.to_numeric(df['CANTIDAD_EN_UM_ENTRADA'], errors='coerce')
+    #         df['CANTIDAD_EN_UM_PARALELA'] = pd.to_numeric(df['CANTIDAD_EN_UM_PARALELA'], errors='coerce')
     #         df.to_excel('query_inventories.xlsx', index=False)
     # except psycopg2.OperationalError as e:
     #     print(f"Connection error: {e}")    

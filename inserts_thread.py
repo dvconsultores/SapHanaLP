@@ -43,7 +43,7 @@ def insert_farm_data(conn, cursor, df_farms):
 # Function to perform warehouse data insertion
 def insert_warehouse_data(engine, conn, cursor, df_warehouse):
     if df_warehouse is not None and not df_warehouse.empty:
-        df_warehouse.rename(columns={'WERKS': 'id_sap', 'NAME1': 'name'}, inplace=True)
+        df_warehouse.rename(columns={'WERKS': 'id_sap'}, inplace=True)
         df_warehouse.to_sql('temp_warehouse', engine, if_exists='replace', index=False)
         print("Temporary table warehouse created")
         time.sleep(3)  # wait for 3 seconds before reading the temp table

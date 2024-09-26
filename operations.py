@@ -43,22 +43,23 @@ def store_warehouse_data(conn, cursor, df, batch_size=500, max_workers=32):
     data = [(record[0], record[1], record[2]) for record in df.itertuples(index=False, name=None)]  # Access fields by index    
     
     try:
-        # Prepare the list of ids for the query and avoid executing empty queries
-        id_sap_list = df['id_sap'].tolist()
-        if not id_sap_list:  # If the list is empty, skip the query
-            print("No id_sap to process, skipping database operations.")
+        # Prepare the list of combined keys for the query and avoid executing empty queries
+        combined_keys = [(row['id_sap'], row['granjaIdId']) for _, row in df.iterrows()]
+        if not combined_keys:  # If the list is empty, skip the query
+            print("No combined keys to process, skipping database operations.")
             return
 
-        # Fetch existing id_sap from the database to determine which records to update or insert
-        cursor.execute("SELECT id_sap FROM galpones WHERE id_sap IN %s", (tuple(id_sap_list),))
-        existing_ids = set([row[0] for row in cursor.fetchall()])  # Use fetchall() to get the results
-
+        # Fetch existing combined keys from the database to determine which records to update or insert
+        cursor.execute("SELECT id_sap, \"granjaIdId\" FROM galpones WHERE (id_sap, \"granjaIdId\") IN %s", (tuple(combined_keys),))
+        existing_keys = set([(row[0], row[1]) for row in cursor.fetchall()])  # Use fetchall() to get the results
+        # print(existing_keys)
         update_data = []
         insert_data = []
 
-        # Separate records into update and insert based on existing ids
+        # Separate records into update and insert based on existing combined keys
         for record in data:
-            if record[0] in existing_ids:
+            combined_key = (record[0], record[2])
+            if combined_key in existing_keys:
                 update_data.append(record)  # Existing records will be updated
             else:
                 insert_data.append(record)  # New records will be inserted
@@ -73,9 +74,9 @@ def store_warehouse_data(conn, cursor, df, batch_size=500, max_workers=32):
             sql_update = """
                 UPDATE galpones
                 SET galpon = %s, "granjaIdId" = %s
-                WHERE id_sap = %s;
+                WHERE id_sap = %s AND "granjaIdId" = %s;
             """
-            update_records = [(r[1], r[2], r[0]) for r in batch]
+            update_records = [(r[1], r[2], r[0], r[2]) for r in batch]
             psycopg2.extras.execute_batch(cursor, sql_update, update_records)
             conn.commit()
 
@@ -183,7 +184,6 @@ def store_crias_ordenes_recepcion(conn, cursor, df, batch_size=500, max_workers=
     data = [(record[0], record[1], int(record[2] or 0), int(record[3] or 0),
             record[4], record[5]) 
             for record in df.itertuples(index=False, name=None)]  # Access fields by index    
-
     try:
         # Prepare the list of ids for the query and avoid executing empty queries
         id_sap_list = df['id_sap'].tolist()
@@ -192,7 +192,7 @@ def store_crias_ordenes_recepcion(conn, cursor, df, batch_size=500, max_workers=
             return
 
         # Fetch existing id_sap from the database to determine which records to update or insert
-        cursor.execute("SELECT id_sap FROM crias_ordenes_recepcion WHERE id_sap IN %s", (tuple(id_sap_list),))
+        cursor.execute("SELECT trim(id_sap) FROM crias_ordenes_recepcion WHERE id_sap IN %s", (tuple(id_sap_list),))
         fetched_rows = cursor.fetchall()
 
         # Debugging: Print out the fetched results
