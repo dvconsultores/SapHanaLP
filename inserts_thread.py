@@ -100,4 +100,18 @@ def insert_transfer_food_farms_data(engine, conn, cursor, df_transfer_food_farms
 
         operations.store_transferencias_alimento(conn, cursor, df_transfer_food_farms_temp) if len(df_transfer_food_farms_temp) > 0 else print("No data to insert.")
     else:
-        print("No transfer food data to insert (either query returned None or DataFrame is empty).")         
+        print("No transfer food data to insert (either query returned None or DataFrame is empty).")  
+
+# Function to perform trasfer food to farm data insertion
+def insert_transfer_incubator_fattering_data(engine, conn, cursor, df_incubator_fattering):
+    if df_incubator_fattering is not None and not df_incubator_fattering.empty:
+        df_incubator_fattering.to_sql('temp_incubadoras_engorde', engine, if_exists='replace', index=False)
+        print("Temporary table temp_incubadoras_engorde created")
+        time.sleep(3)  # wait for 3 seconds before reading the temp table
+        
+        # Query from the temporary food transfer
+        df_incubator_fattering_temp = query_postgres(conn, cursor, qh.query_trasnfer_incubator_fattening_temp)
+        print("Reading from temp_transf_alimento_granja...")
+        operations.store_incubator_fattering_orders(conn, cursor, df_incubator_fattering_temp) if len(df_incubator_fattering_temp) > 0 else print("No data to insert.")
+    else:
+        print("No transfer food data to insert (either query returned None or DataFrame is empty).")                 

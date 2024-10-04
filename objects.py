@@ -128,6 +128,8 @@ def main():
             df_purchase_orders = query_hana(hana_connection, hana_cursor, qh.query_purchase_orders)
             # Query query_transfer_food_farms
             df_transfer_food_farms = query_hana(hana_connection, hana_cursor, qh.query_transfer_food_farms)
+            # Query incubator fattering orders
+            df_incubator_fattering = query_hana(hana_connection, hana_cursor, qh.query_trasnfer_incubator_fattening)
         finally:
             # Step 2: Disconnect VPN and close SAP HANA connection after all queries
             if hana_cursor:
@@ -176,7 +178,8 @@ def main():
             futures.append(executor.submit(it.insert_crias_ordenes_recepcion_data, engine, conn, cursor, df_purchase_orders))  # purchase orders
             time.sleep(3)  # wait for 3 seconds before inserting the next table
             futures.append(executor.submit(it.insert_transfer_food_farms_data, engine, conn, cursor, df_transfer_food_farms))  # transfer food farms
-
+            time.sleep(3)  # wait for 3 seconds before inserting the next table
+            futures.append(executor.submit(it.insert_transfer_incubator_fattering_data, engine, conn, cursor, df_incubator_fattering))  # incubator fattering
             # Process the results as they complete
             for future in as_completed(futures):
                 try:

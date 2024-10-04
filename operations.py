@@ -312,16 +312,9 @@ def store_transferencias_alimento(conn, cursor, df, batch_size=500, max_workers=
             sql_update = """
                 UPDATE alimento_ordenes
                 SET cantidad_kg = %s,
-                    status = 'ACTIVO',
-                    creation_date = now(),
-                    "granjaIdId" = %s,
-                    codigo_alimento = %s,
-                    tipo_alimento = %s,
-                    etapa = %s
-                WHERE id_sap = %s
-                AND status = 'ACTIVO';
+                WHERE id_sap = %s;
             """
-            update_records = [(r[2], r[3], r[4], r[5], r[6], r[0]) for r in batch]
+            update_records = [(r[2], r[0]) for r in batch]
             psycopg2.extras.execute_batch(cursor, sql_update, update_records)
             conn.commit()
 
@@ -363,3 +356,96 @@ def store_transferencias_alimento(conn, cursor, df, batch_size=500, max_workers=
         conn.rollback()
     finally:
         conn.commit()  # Ensure the transaction is committed at the end
+
+
+
+# Function to store transfer incubator fattering
+def store_incubator_fattering_orders(conn, cursor, df, batch_size=500, max_workers=32):
+    # Convert the DataFrame rows into a list of tuples for easy insertion
+    data = [(record[0], record[1], float(record[2] or 0), int(record[3] or 0),
+            record[4], record[5]) 
+            for record in df.itertuples(index=False, name=None)]  # Access fields by index    
+    try:
+        # Prepare the list of ids for the query and avoid executing empty queries
+        id_sap_list = df['id_sap'].tolist()
+        if not id_sap_list:  # If the list is empty, skip the query
+            print("No id_sap to process, skipping database operations.")
+            return
+
+        # Fetch existing id_sap from the database to determine which records to update or insert
+        cursor.execute("SELECT trim(id_sap) FROM temp_incubadoras_engorde WHERE id_sap IN %s", (tuple(id_sap_list),))
+        fetched_rows = cursor.fetchall()
+
+        # Debugging: Print out the fetched results
+        print(f"Fetched {len(fetched_rows)} rows from the database.")
+        
+        existing_ids = set([row[0] for row in fetched_rows])  # Use fetchall() to get the results
+
+        update_data = []
+        insert_data = []
+
+        # Separate records into update and insert based on existing ids
+        for record in data:
+            if record[1] in existing_ids:
+                update_data.append(record)  # Existing records will be updated
+            else:
+                insert_data.append(record)  # New records will be inserted
+
+        # Check if there is any data to update or insert
+        if not update_data and not insert_data:
+            print("No data to update or insert.")
+            return
+
+        # Function to perform batch update
+        def batch_update(batch):
+            sql_update = """
+                UPDATE incubadora_ordenes_salida_pollitos
+                SET cantidad = %s,
+                    creation_date = now()
+                WHERE id_sap = %s;
+            """
+            update_records = [(r[2], r[0]) for r in batch]
+            psycopg2.extras.execute_batch(cursor, sql_update, update_records)
+            conn.commit()
+
+        # Function to perform batch insert
+        def batch_insert(batch):
+            sql_insert = """
+                INSERT INTO incubadora_ordenes_salida_pollitos (id_sap, orden, cant_pollitos, "incubadoraOrigenIdId", "granjaDestinoIdId", "transporteIdId")
+                VALUES (%s, %s, %s, %s, %s, %s);
+            """
+            if not batch:  # Check if batch is empty before attempting to insert
+                print("No data to insert")
+                return
+            psycopg2.extras.execute_batch(cursor, sql_insert, batch)
+            conn.commit()
+
+        # Create a ThreadPoolExecutor to process batches in parallel
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = []
+            
+            # Submit update tasks to the executor
+            if update_data:
+                for i in range(0, len(update_data), batch_size):
+                    batch = update_data[i:i + batch_size]
+                    futures.append(executor.submit(batch_update, batch))
+
+            # Submit insert tasks to the executor
+            if insert_data:
+                for i in range(0, len(insert_data), batch_size):
+                    batch = insert_data[i:i + batch_size]
+                    futures.append(executor.submit(batch_insert, batch))
+
+            # Wait for all tasks to complete
+            for future in as_completed(futures):
+                future.result()  # If any exception occurs in the thread, it will be raised here
+
+        print(f"Upsert applied for {len(data)} records.")
+
+    except psycopg2.Error as e:
+        print(f"Error during upsert: {e}")
+        print(traceback.format_exc())  # Print full traceback for more details
+        conn.rollback()
+    finally:
+        # No need to return connection to pool since we're directly using the passed `conn`
+        pass

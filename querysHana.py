@@ -152,6 +152,42 @@ WHERE a."WERKS" in (SELECT "id_sap" FROM granjas);
 """    
 
 
+# Purchase Orders in Process
+query_trasnfer_incubator_fattening = """
+SELECT EKPO1.EBELN AS "orden_compra"
+    , EKPO1.UNIQUEID AS "id_sap"
+    , '1' AS "lote"
+    , '3000' AS "incubadora"
+    , EKPO1.WERKS AS "granjaIdId"
+    , EKPO1.MENGE AS "cantidad" -- Replace NULL with 0 for cant_machos
+    , EKPO1.AEDAT
+    , EKPO1.EBELN 
+    , '000000000000' AS "transporteIdId"
+FROM SAPHANADB.EKPO EKPO1
+ INNER JOIN SAPHANADB.EKKO ON EKPO1.EBELN = EKKO.EBELN -- Join with EKKO to get LIFNR
+WHERE EKPO1.AEDAT >= TO_CHAR(CURRENT_DATE, 'YYYY') || '0101'
+AND EKPO1.EBELN = '4500012887'
+AND EKPO1.MATNR = '000000000000120000' -- Material number
+"""
+
+
+# Purchase Orders in Process Temporary table
+query_trasnfer_incubator_fattening_temp = """
+SELECT 
+    trim(a.id_sap) id_sap,
+	a.orden_compra,
+	a.cantidad,
+	b.id,
+    g.id,
+	c.id
+FROM 
+    temp_incubadoras_engorde a
+INNER JOIN 
+    granjas g ON a."granjaIdId" = g.id_sap
+INNER JOIN incubadoras b on a."incubadora" = b."id_sap"
+INNER JOIN transportes c on a."transporteIdId" = c."id_sap"
+"""     
+
 
 ##########################################################################################################################
 ##########################################################################################################################
