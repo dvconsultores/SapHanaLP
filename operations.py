@@ -312,6 +312,7 @@ def store_transferencias_alimento(conn, cursor, df, batch_size=500, max_workers=
             sql_update = """
                 UPDATE alimento_ordenes
                 SET cantidad_kg = %s,
+                creation_date = now()
                 WHERE id_sap = %s;
             """
             update_records = [(r[2], r[0]) for r in batch]

@@ -161,24 +161,27 @@ def main():
         pg_url = f'postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_database}'
         engine = create_engine(pg_url)
 
+        print("Performing Inserts in Sequence")
+       
+        it.insert_farm_data(conn, cursor, df_farms) #farms
+        it.insert_transport_data(conn, cursor, df_transport) # vendors
+        it.insert_vendors_data(conn, cursor, df_transport)  # vendors
+        
+        time.sleep(3)  # wait for 3 seconds before inserting the next table
+
         print("Performing Inserts in Parallel")
         
         # Use ThreadPoolExecutor to run inserts in parallel
         with ThreadPoolExecutor(max_workers=32) as executor:
             # Submit tasks to the executor
             futures = []
-            futures.append(executor.submit(it.insert_farm_data, conn, cursor, df_farms))  # farms
-            time.sleep(3)  # wait for 3 seconds before inserting the next table
-            futures.append(executor.submit(it.insert_transport_data, conn, cursor, df_transport))  # transport
-            time.sleep(3)  # wait for 3 seconds before inserting the next table
-            futures.append(executor.submit(it.insert_vendors_data, conn, cursor, df_transport))  # vendors
-            time.sleep(3)  # wait for 3 seconds before inserting the next table
+            time.sleep(1)  # wait for 3 seconds before inserting the next table
             futures.append(executor.submit(it.insert_warehouse_data, engine, conn, cursor, df_warehouse))  # warehouse
-            time.sleep(3)  # wait for 3 seconds before inserting the next table
+            time.sleep(1)  # wait for 3 seconds before inserting the next table
             futures.append(executor.submit(it.insert_crias_ordenes_recepcion_data, engine, conn, cursor, df_purchase_orders))  # purchase orders
-            time.sleep(3)  # wait for 3 seconds before inserting the next table
+            time.sleep(1)  # wait for 3 seconds before inserting the next table
             futures.append(executor.submit(it.insert_transfer_food_farms_data, engine, conn, cursor, df_transfer_food_farms))  # transfer food farms
-            time.sleep(3)  # wait for 3 seconds before inserting the next table
+            time.sleep(1)  # wait for 3 seconds before inserting the next table
             futures.append(executor.submit(it.insert_transfer_incubator_fattering_data, engine, conn, cursor, df_incubator_fattering))  # incubator fattering
             # Process the results as they complete
             for future in as_completed(futures):
