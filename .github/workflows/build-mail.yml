@@ -38,4 +38,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/mockba:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/sap_hana_lp:latest
