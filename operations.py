@@ -193,7 +193,12 @@ def store_crias_ordenes_recepcion(conn, cursor, df, batch_size=500, max_workers=
 
         # Fetch existing id_sap from the database to determine which records to update or insert
         cursor.execute("SELECT trim(id_sap) FROM crias_ordenes_recepcion WHERE id_sap IN %s", (tuple(id_sap_list),))
-        fetched_rows = cursor.fetchall()
+
+        # Check if there are any results before calling fetchall()
+        if cursor.rowcount == 0:
+            fetched_rows = []
+        else:
+            fetched_rows = cursor.fetchall()
 
         # Debugging: Print out the fetched results
         print(f"Fetched {len(fetched_rows)} rows from the database.")
@@ -205,7 +210,7 @@ def store_crias_ordenes_recepcion(conn, cursor, df, batch_size=500, max_workers=
 
         # Separate records into update and insert based on existing ids
         for record in data:
-            if record[1] in existing_ids:
+            if record[0] in existing_ids:
                 update_data.append(record)  # Existing records will be updated
             else:
                 insert_data.append(record)  # New records will be inserted
@@ -312,20 +317,21 @@ def store_transferencias_alimento(conn, cursor, df, batch_size=500, max_workers=
             sql_update = """
                 UPDATE alimento_ordenes
                 SET cantidad_kg = %s,
+                disponible_kg = %s,
                 creation_date = now()
                 WHERE id_sap = %s;
             """
-            update_records = [(r[2], r[0]) for r in batch]
+            update_records = [(r[2], r[2], r[0]) for r in batch]
             psycopg2.extras.execute_batch(cursor, sql_update, update_records)
             conn.commit()
 
         # Function to perform batch insert
         def batch_insert(batch):
             sql_insert = """
-                INSERT INTO alimento_ordenes (id_sap, num_orden, cantidad_kg, status, creation_date, "granjaIdId", codigo_alimento, tipo_alimento, etapa)
+                INSERT INTO alimento_ordenes (id_sap, num_orden, cantidad_kg, status, creation_date, "granjaIdId", codigo_alimento, tipo_alimento, etapa, disponible_kg)
                 VALUES (%s, %s, %s, 'ACTIVO', now(), %s, %s, %s, %s);
             """
-            insert_records = [(r[0], r[1], r[2], r[3], r[4], r[5], r[6]) for r in batch]
+            insert_records = [(r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[1]) for r in batch]
             if not batch:  # Check if batch is empty before attempting to insert
                 print("No data to insert")
                 return
@@ -374,20 +380,24 @@ def store_incubator_fattering_orders(conn, cursor, df, batch_size=500, max_worke
             return
 
         # Fetch existing id_sap from the database to determine which records to update or insert
-        cursor.execute("SELECT trim(id_sap) FROM temp_incubadoras_engorde WHERE id_sap IN %s", (tuple(id_sap_list),))
-        fetched_rows = cursor.fetchall()
+        cursor.execute("SELECT trim(id_sap) FROM incubadora_ordenes_salida_pollitos WHERE id_sap IN %s", (tuple(id_sap_list),))
+        
+        # Check if there are any results before calling fetchall()
+        if cursor.rowcount == 0:
+            fetched_rows = []
+        else:
+            fetched_rows = cursor.fetchall()
 
         # Debugging: Print out the fetched results
         print(f"Fetched {len(fetched_rows)} rows from the database.")
         
         existing_ids = set([row[0] for row in fetched_rows])  # Use fetchall() to get the results
-
         update_data = []
         insert_data = []
 
         # Separate records into update and insert based on existing ids
         for record in data:
-            if record[1] in existing_ids:
+            if record[0] in existing_ids:
                 update_data.append(record)  # Existing records will be updated
             else:
                 insert_data.append(record)  # New records will be inserted
@@ -401,7 +411,7 @@ def store_incubator_fattering_orders(conn, cursor, df, batch_size=500, max_worke
         def batch_update(batch):
             sql_update = """
                 UPDATE incubadora_ordenes_salida_pollitos
-                SET cantidad = %s,
+                SET cant_pollitos = %s,
                     creation_date = now()
                 WHERE id_sap = %s;
             """

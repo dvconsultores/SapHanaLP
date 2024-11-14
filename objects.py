@@ -166,7 +166,7 @@ def main():
         it.insert_farm_data(conn, cursor, df_farms) #farms
         it.insert_transport_data(conn, cursor, df_transport) # vendors
         it.insert_vendors_data(conn, cursor, df_transport)  # vendors
-        
+
         time.sleep(3)  # wait for 3 seconds before inserting the next table
 
         print("Performing Inserts in Parallel")
