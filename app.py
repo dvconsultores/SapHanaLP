@@ -206,7 +206,8 @@ def main():
 
 # Run the main function
 if __name__ == "__main__":
-    main()
+    # main()
+    print("Connecting to Hana...")
 
     # print("Connecting to Hana...")
     # hana_connection = None
