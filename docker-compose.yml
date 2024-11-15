@@ -1,29 +1,21 @@
 services:
-  mockba:
-    build: .
+  sap_hana_lp:
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: sap_hana_lp
-    environment:
-      - PYTHONUNBUFFERED=1
-      - PYTHONPATH=/app
     env_file:
       - .env
-    command: ["/usr/local/bin/vpn_setup.sh"]
+    # volumes:
+    #   - .:/app  # Uncomment this line if you need local files
 
   watchtower:
     image: containrrr/watchtower
     container_name: watchtower-test
     restart: always
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-
-  vpn:
-    build:
-      context: .
-    container_name: vpn-service
-    cap_add:
-      - NET_ADMIN
-    volumes:
-      - /etc/NetworkManager:/etc/NetworkManager
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: ["/usr/local/bin/vpn_connect.sh"]
-    network_mode: host  # Important for VPN to work on host network
+      - /var/run/docker.sock:/var/run/docker.sock  # This allows Watchtower to access Docker
+    environment:
+      - WATCHTOWER_CLEANUP=true         # Cleanup old images after update
+      - WATCHTOWER_POLL_INTERVAL=30     # Check for updates every 30 seconds
+      - WATCHTOWER_DEBUG=true           # Optional: Enable debug mode for more logging

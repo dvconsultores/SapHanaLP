@@ -1,26 +1,17 @@
-FROM dvconsultores/sap_hana_lp:latest
+# Use the official Python image from the Docker Hub
+FROM python:3.11-slim
 
-# Install VPN packages
-RUN apt-get update && \
-    apt-get install -y \
-    strongswan \
-    xl2tpd \
-    network-manager \
-    iproute2 \
-    iputils-ping \
-    l2tp-ipsec-vpn \
-    sudo \
-    expect \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Set the working directory in the container
+WORKDIR /app
 
-# Copy VPN configuration scripts
-COPY vpn_setup.sh /usr/local/bin/vpn_setup.sh
-COPY vpn_connect.sh /usr/local/bin/vpn_connect.sh
+# Copy the requirements file into the container
+COPY requirements.txt .
 
-# Make the scripts executable
-RUN chmod +x /usr/local/bin/vpn_setup.sh && \
-    chmod +x /usr/local/bin/vpn_connect.sh
+# Install the dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Set the default command (adjust as needed)
-CMD ["/usr/local/bin/vpn_setup.sh"]
+# Copy the rest of the application code into the container
+COPY . .
+
+# Run the main script
+CMD ["python", "app.py"]
