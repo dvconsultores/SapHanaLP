@@ -5,6 +5,10 @@ FROM python:3.11-slim AS python_env
 RUN apt-get update && \
     apt-get install -y network-manager iproute2 iputils-ping curl dnsutils
 
+# Install the NetworkManager service
+# Ensure NetworkManager service is enabled and started
+RUN systemctl enable NetworkManager && systemctl start NetworkManager    
+
 # Set the working directory in the container
 WORKDIR /app
 
