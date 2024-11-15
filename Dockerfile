@@ -17,5 +17,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code into the container
 COPY . .
 
-# Start NetworkManager service in the background, then run the main Python app
-CMD service network-manager start && python app.py
+# Ensure NetworkManager is running before starting the application
+CMD service network-manager start && \
+    tail -f /dev/null & \
+    python app.py
