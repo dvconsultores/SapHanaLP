@@ -1,8 +1,8 @@
 version: '3.9'
 
 services:
-  mockba:
-    image: dvconsultores/sap_hana_lp:latest
+  sap_hana_lp:
+    build: .
     container_name: sap_hana_lp
     env_file:
       - .env
@@ -19,8 +19,8 @@ services:
     environment:
       - WATCHTOWER_CLEANUP=true         # Cleanup old images after update
       - WATCHTOWER_POLL_INTERVAL=30     # Check for updates every 30 seconds
-      - WATCHTOWER_DEBUG=true            # Optional: Enable debug mode for more logging
+      - WATCHTOWER_DEBUG=true           # Optional: Enable debug mode for more logging
 
-networks:
-  app-network:
-    driver: bridge
+# networks:
+#   app-network:
+#     driver: bridge
