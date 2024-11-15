@@ -1,21 +1,51 @@
-services:
-  sap_hana_lp:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: sap_hana_lp
-    env_file:
-      - .env
-    # volumes:
-    #   - .:/app  # Uncomment this line if you need local files
+version: '3.8'
 
+services:
+  # L2TP VPN Client with IPsec
+  l2tp-vpn-client:
+    image: ubuntu:20.04
+    container_name: l2tp-vpn-client
+    environment:
+      - VPN_NAME=LiderPollo1
+      - VPN_GATEWAY=lider-pollo-hq-vbzczkzdkpc.dynamic-m.com
+      - VPN_USERNAME=developer@dvconsultores.com
+      - VPN_PASSWORD=6xU2zcv9
+      - VPN_PSK=GEq3Bvg5DYpaCcq
+      - IPSEC_ESP=3des-sha1
+      - IPSEC_IKE=3des-sha1-modp1024
+    volumes:
+      - ./vpn-config:/etc/vpn  # Store VPN configuration files here
+    cap_add:
+      - NET_ADMIN  # Required to manage network settings
+    command: ["/bin/bash", "-c", "/etc/vpn/setup-vpn.sh && tail -f /dev/null"]
+    networks:
+      - vpn_network
+    restart: unless-stopped
+
+  # SAP Hana LP (application depending on the VPN)
+  sap_hana_lp:
+    image: dvconsultores/sap_hana_lp:latest
+    container_name: sap_hana_lp
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app
+    depends_on:
+      - l2tp-vpn-client  # Ensure VPN is up before SAP starts
+    networks:
+      - vpn_network
+    command: ["python3", "app.py"]
+
+  # Watchtower (optional, for automatic updates of containers)
   watchtower:
     image: containrrr/watchtower
-    container_name: watchtower-test
-    restart: always
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock  # This allows Watchtower to access Docker
+    container_name: watchtower
     environment:
-      - WATCHTOWER_CLEANUP=true         # Cleanup old images after update
-      - WATCHTOWER_POLL_INTERVAL=30     # Check for updates every 30 seconds
-      - WATCHTOWER_DEBUG=true           # Optional: Enable debug mode for more logging
+      - WATCHTOWER_NOTIFICATIONS=email
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    command: --interval 300  # Check for updates every 5 minutes
+
+networks:
+  vpn_network:
+    driver: bridge

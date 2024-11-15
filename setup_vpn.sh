@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # VPN configuration parameters
-VPN_NAME="LiderPollo"
+VPN_NAME="LiderPollo1"
 VPN_GATEWAY="lider-pollo-hq-vbzczkzdkpc.dynamic-m.com"
 VPN_USERNAME="developer@dvconsultores.com"
 VPN_PASSWORD="6xU2zcv9"
