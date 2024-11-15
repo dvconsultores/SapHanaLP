@@ -3,12 +3,12 @@ FROM python:3.11-slim AS python_env
 
 # Install NetworkManager and nmcli
 RUN apt-get update && \
-    apt-get install -y network-manager iproute2 iputils-ping curl dnsutils
+    apt-get install -y network-manager iproute2 iputils-ping curl dnsutils dbus
 
 # Start dbus and NetworkManager
 RUN service dbus start && \
-    service network-manager start && \
-    nmcli general status 
+    /etc/init.d/network-manager start && \
+    nmcli general status
 
 # Set the working directory in the container
 WORKDIR /app
@@ -23,6 +23,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Ensure NetworkManager is running before starting the application
-CMD service network-manager start && \
+CMD service dbus start && \
+    /etc/init.d/network-manager start && \
     tail -f /dev/null & \
     python app.py
