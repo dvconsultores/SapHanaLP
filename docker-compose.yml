@@ -1,55 +1,29 @@
-version: '3.8'
-
 services:
-  # L2TP VPN Client
-  l2tp-vpn-client:
-    build:
-      context: .
-      dockerfile: Dockerfile  # Path to your Dockerfile
-    container_name: l2tp-vpn-client
-    environment:
-      - VPN_NAME=LiderPollo1
-      - VPN_GATEWAY=lider-pollo-hq-vbzczkzdkpc.dynamic-m.com
-      - VPN_USERNAME=developer@dvconsultores.com
-      - VPN_PASSWORD=6xU2zcv9
-      - VPN_PSK=GEq3Bvg5DYpaCcq
-      - IPSEC_ESP=3des-sha1
-      - IPSEC_IKE=3des-sha1-modp1024
-    volumes:
-      - ./vpn-config:/etc/vpn-config  # Mount the folder containing your setup script and config files
-    cap_add:
-      - NET_ADMIN  # Required for network management in the container
-    networks:
-      - vpn_network
-    restart: unless-stopped
-    command: ["/bin/bash", "/etc/vpn-config/setup-vpn.sh"]
-
-  # SAP Hana LP (application depending on the VPN)
-  sap_hana_lp:
-    image: dvconsultores/sap_hana_lp:latest
+  mockba:
+    build: .
     container_name: sap_hana_lp
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app
     env_file:
-      - .env  # Load environment variables from a file  
-    depends_on:
-      - l2tp-vpn-client  # Ensure VPN is up before SAP starts
-    networks:
-      - vpn_network
-    command: ["python3", "app.py"]
+      - .env
+    command: ["/usr/local/bin/vpn_setup.sh"]
 
-  # Watchtower (optional, for automatic updates of containers)
   watchtower:
     image: containrrr/watchtower
-    container_name: watchtower
-    environment:
-      - WATCHTOWER_NOTIFICATIONS=email
+    container_name: watchtower-test
+    restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    restart: unless-stopped
-    command: --interval 300  # Check for updates every 5 minutes
 
-networks:
-  vpn_network:
-    driver: bridge
+  vpn:
+    build:
+      context: .
+    container_name: vpn-service
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - /etc/NetworkManager:/etc/NetworkManager
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: ["/usr/local/bin/vpn_connect.sh"]
+    network_mode: host  # Important for VPN to work on host network
