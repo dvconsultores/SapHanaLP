@@ -2,13 +2,14 @@ version: '3.9'
 
 services:
   sap_hana_lp:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: sap_hana_lp
     env_file:
       - .env
     volumes:
       - .:/app  # Uncomment this line if you need local files
-    command: ["python3", "objects.py"]
 
   watchtower:
     image: containrrr/watchtower
@@ -20,7 +21,3 @@ services:
       - WATCHTOWER_CLEANUP=true         # Cleanup old images after update
       - WATCHTOWER_POLL_INTERVAL=30     # Check for updates every 30 seconds
       - WATCHTOWER_DEBUG=true           # Optional: Enable debug mode for more logging
-
-# networks:
-#   app-network:
-#     driver: bridge
