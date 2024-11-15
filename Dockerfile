@@ -13,9 +13,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code into the container
 COPY . .
 
-# Debugging: List contents of /app
-RUN ls -la /app
-
-
 # Run the main script
 CMD ["python", "app.py"]
