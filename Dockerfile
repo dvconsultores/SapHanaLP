@@ -7,7 +7,7 @@ RUN apt-get update && \
 
 # Start dbus and NetworkManager
 RUN service dbus start && \
-    /etc/init.d/network-manager start && \
+    systemctl start NetworkManager && \
     nmcli general status
 
 # Set the working directory in the container
@@ -24,6 +24,6 @@ COPY . .
 
 # Ensure NetworkManager is running before starting the application
 CMD service dbus start && \
-    /etc/init.d/network-manager start && \
+    systemctl start NetworkManager && \
     tail -f /dev/null & \
     python app.py
