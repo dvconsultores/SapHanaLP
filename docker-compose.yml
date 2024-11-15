@@ -6,8 +6,8 @@ services:
     container_name: sap_hana_lp
     env_file:
       - .env
-    # volumes:
-    #   - .:/app  # Uncomment this line if you need local files
+    volumes:
+       - .:/app  # Uncomment this line if you need local files
     # command: ["python3", "objects.py"]
 
   watchtower:
