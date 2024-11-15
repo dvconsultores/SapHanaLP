@@ -1,9 +1,11 @@
 version: '3.8'
 
 services:
-  # L2TP VPN Client with IPsec
+  # L2TP VPN Client
   l2tp-vpn-client:
-    image: ubuntu:20.04
+    build:
+      context: .
+      dockerfile: Dockerfile  # Path to your Dockerfile
     container_name: l2tp-vpn-client
     environment:
       - VPN_NAME=LiderPollo1
@@ -14,13 +16,13 @@ services:
       - IPSEC_ESP=3des-sha1
       - IPSEC_IKE=3des-sha1-modp1024
     volumes:
-      - ./vpn-config:/etc/vpn  # Store VPN configuration files here
+      - ./vpn-config:/etc/vpn-config  # Mount the folder containing your setup script and config files
     cap_add:
-      - NET_ADMIN  # Required to manage network settings
-    command: ["/bin/bash", "-c", "/etc/vpn/setup-vpn.sh && tail -f /dev/null"]
+      - NET_ADMIN  # Required for network management in the container
     networks:
       - vpn_network
     restart: unless-stopped
+    command: ["/bin/bash", "/etc/vpn-config/setup-vpn.sh"]
 
   # SAP Hana LP (application depending on the VPN)
   sap_hana_lp:
@@ -29,6 +31,8 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app
+    env_file:
+      - .env  # Load environment variables from a file  
     depends_on:
       - l2tp-vpn-client  # Ensure VPN is up before SAP starts
     networks:

@@ -11,19 +11,16 @@ RUN apt-get update && \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install nmcli
+# Install nmcli (though it should already be installed with NetworkManager)
 RUN ln -s /usr/bin/nmcli /usr/local/bin/nmcli
 
-# Ensure NetworkManager service is enabled
-RUN systemctl enable NetworkManager.service
-
-# Copy VPN scripts into the container
-COPY ./openvpn-config /etc/openvpn-config
+# Copy VPN setup scripts into the container
+COPY ./vpn-config /etc/vpn-config
 
 # Make the scripts executable
-RUN chmod +x /etc/openvpn-config/*.sh
+RUN chmod +x /etc/vpn-config/*.sh
 
-# Set environment variables (or mount them later if required)
+# Set environment variables (can also be passed dynamically via docker-compose.yml)
 ENV VPN_NAME="LiderPollo1"
 ENV VPN_GATEWAY="lider-pollo-hq-vbzczkzdkpc.dynamic-m.com"
 ENV VPN_USERNAME="developer@dvconsultores.com"
@@ -32,5 +29,5 @@ ENV VPN_PSK="GEq3Bvg5DYpaCcq"
 ENV IPSEC_ESP="3des-sha1"
 ENV IPSEC_IKE="3des-sha1-modp1024"
 
-# Run the VPN setup script on container start
-CMD ["/etc/openvpn-config/setup-vpn.sh"]
+# The command to start the VPN configuration script
+CMD ["/bin/bash", "/etc/vpn-config/setup-vpn.sh"]
