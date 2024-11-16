@@ -204,11 +204,19 @@ def main():
         print("PostgreSQL connection closed.")
     print(f"Execution time: {time.time() - time_start:.2f} seconds.")        
 
+def main1():
+    print("Connecting to Hana...")
+    # Your main function logic here
+    # For example, connecting to Hana and performing operations
+
+    # Simulate some work with a sleep
+    time.sleep(10)
+
+    print("Finished work")
+
 # Run the main function
 if __name__ == "__main__":
-    # main()
-    print("Connecting to Hana...")
-
+    main1()
     # print("Connecting to Hana...")
     # hana_connection = None
     # hana_cursor = None
