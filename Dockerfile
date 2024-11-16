@@ -1,25 +1,17 @@
-# Start from the Python slim image
-FROM python:3.11-slim
+FROM ubuntu:20.04
 
-# Install NetworkManager, supervisord, and dependencies
+# Install NetworkManager
 RUN apt-get update && \
-    apt-get install -y network-manager supervisor iproute2 iputils-ping curl dnsutils && \
+    apt-get install -y network-manager iproute2 iputils-ping curl dnsutils && \
     apt-get clean
 
-# Set the working directory in the container
+# Set working directory
 WORKDIR /app
 
-# Copy the requirements file into the container
+# Copy application files
 COPY requirements.txt .
-
-# Install the Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the application code into the container
 COPY . .
 
-# Copy the supervisord configuration file
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# Start supervisord to manage NetworkManager and the Python app
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Start NetworkManager and your app
+CMD /usr/sbin/NetworkManager --no-daemon & python app.py
