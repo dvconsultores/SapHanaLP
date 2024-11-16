@@ -14,6 +14,7 @@ import querysHana as qh
 import psycopg2
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
+import schedule
 from sqlalchemy import create_engine, text
 # Load environment variables from the .env file
 load_dotenv()
@@ -205,9 +206,25 @@ def main():
     print(f"Execution time: {time.time() - time_start:.2f} seconds.")        
 
 
+def job():
+    print("Running scheduled job...")
+    main()
+
 # Run the main function
 if __name__ == "__main__":
+    # Run the main function immediately when the container starts
     main()
+
+    # Schedule the job to run at specific times
+    schedule.every().day.at("06:00").do(job)
+    schedule.every().day.at("10:00").do(job)
+    schedule.every().day.at("14:00").do(job)
+    schedule.every().day.at("18:00").do(job)
+
+    # Keep the script running
+    while True:
+        schedule.run_pending()
+        time.sleep(60)
 
     # print("Connecting to Hana...")
     # hana_connection = None
