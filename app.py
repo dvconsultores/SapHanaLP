@@ -205,7 +205,8 @@ def main():
     print(f"Execution time: {time.time() - time_start:.2f} seconds.")        
 
 def main1():
-    print("Connecting to Hana...")
+    # Connect to VPN
+    connect_vpn()
     # Your main function logic here
     # For example, connecting to Hana and performing operations
 
@@ -216,12 +217,8 @@ def main1():
 
 # Run the main function
 if __name__ == "__main__":
-    main1()
+    main()
 
-    # Keep the script running
-    while True:
-        time.sleep(60)  # Sleep for 1 minute
-        
     # print("Connecting to Hana...")
     # hana_connection = None
     # hana_cursor = None
