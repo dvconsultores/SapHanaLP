@@ -104,43 +104,43 @@ def query_hana(connection, cursor, query):
 def main():
     time_start = time.time()
     # Step 1: Connect to VPN and SAP HANA
-    if connect_vpn():
-        time.sleep(1)  # wait 1 second
-        print("Performing queries")
-        hana_connection = None
-        hana_cursor = None
-        try:
-            # Establish a single SAP HANA connection
-            hana_connection = dbapi.connect(
-                address=hana_host,
-                port=hana_port,
-                user=hana_user,
-                password=hana_password
-            )
-            hana_cursor = hana_connection.cursor()
+    # if connect_vpn():
+    time.sleep(1)  # wait 1 second
+    print("Performing queries")
+    hana_connection = None
+    hana_cursor = None
+    try:
+        # Establish a single SAP HANA connection
+        hana_connection = dbapi.connect(
+            address=hana_host,
+            port=hana_port,
+            user=hana_user,
+            password=hana_password
+        )
+        hana_cursor = hana_connection.cursor()
 
-            # Query farms data
-            df_farms = query_hana(hana_connection, hana_cursor, qh.query_farms)
-            # Query warehouse data
-            df_warehouse = query_hana(hana_connection, hana_cursor, qh.query_warehouse)
-            # Query transport data
-            df_transport = query_hana(hana_connection, hana_cursor, qh.query_transport)
-            # Query purchase orders data
-            df_purchase_orders = query_hana(hana_connection, hana_cursor, qh.query_purchase_orders)
-            # Query query_transfer_food_farms
-            df_transfer_food_farms = query_hana(hana_connection, hana_cursor, qh.query_transfer_food_farms)
-            # Query incubator fattering orders
-            df_incubator_fattering = query_hana(hana_connection, hana_cursor, qh.query_trasnfer_incubator_fattening)
-        finally:
-            # Step 2: Disconnect VPN and close SAP HANA connection after all queries
-            if hana_cursor:
-                hana_cursor.close()
-            if hana_connection:
-                hana_connection.close()
-            # disconnect_vpn()
-    else:
-        print("Failed to connect to VPN. Exiting.")
-        return  # or exit the script if this is the main function
+        # Query farms data
+        df_farms = query_hana(hana_connection, hana_cursor, qh.query_farms)
+        # Query warehouse data
+        df_warehouse = query_hana(hana_connection, hana_cursor, qh.query_warehouse)
+        # Query transport data
+        df_transport = query_hana(hana_connection, hana_cursor, qh.query_transport)
+        # Query purchase orders data
+        df_purchase_orders = query_hana(hana_connection, hana_cursor, qh.query_purchase_orders)
+        # Query query_transfer_food_farms
+        df_transfer_food_farms = query_hana(hana_connection, hana_cursor, qh.query_transfer_food_farms)
+        # Query incubator fattering orders
+        df_incubator_fattering = query_hana(hana_connection, hana_cursor, qh.query_trasnfer_incubator_fattening)
+    finally:
+        # Step 2: Disconnect VPN and close SAP HANA connection after all queries
+        if hana_cursor:
+            hana_cursor.close()
+        if hana_connection:
+            hana_connection.close()
+        # disconnect_vpn()
+# else:
+#     print("Failed to connect to VPN. Exiting.")
+#     return  # or exit the script if this is the main function
 
     time.sleep(1)  # wait 1 second
 
@@ -204,16 +204,6 @@ def main():
         print("PostgreSQL connection closed.")
     print(f"Execution time: {time.time() - time_start:.2f} seconds.")        
 
-def main1():
-    # Connect to VPN
-    connect_vpn()
-    # Your main function logic here
-    # For example, connecting to Hana and performing operations
-
-    # Simulate some work with a sleep
-    time.sleep(10)
-
-    print("Finished work")
 
 # Run the main function
 if __name__ == "__main__":

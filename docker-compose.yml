@@ -10,9 +10,6 @@ services:
     env_file:
       - .env
     command: ["python3", "app.py"]
-    network_mode: "host"  # Share the host's network stack with the container
-    cap_add:
-      - NET_ADMIN  # Allow container to manage network interfaces (needed for VPN)
 
   watchtower:
     image: containrrr/watchtower
