@@ -216,6 +216,7 @@ if __name__ == "__main__":
     main()
 
     # Schedule the job to run at specific times
+    print("Scheduling job...")
     schedule.every().day.at("06:00").do(job)
     schedule.every().day.at("10:00").do(job)
     schedule.every().day.at("14:00").do(job)
