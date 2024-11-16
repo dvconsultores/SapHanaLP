@@ -1,9 +1,10 @@
-# Start from the Python image
-FROM python:3.11-slim AS python_env
+# Start from the Python slim image
+FROM python:3.11-slim
 
-# Install NetworkManager and nmcli
+# Install NetworkManager, supervisord, and dependencies
 RUN apt-get update && \
-    apt-get install -y network-manager iproute2 iputils-ping curl dnsutils
+    apt-get install -y network-manager supervisor iproute2 iputils-ping curl dnsutils && \
+    apt-get clean
 
 # Set the working directory in the container
 WORKDIR /app
@@ -17,7 +18,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code into the container
 COPY . .
 
-# Ensure NetworkManager is running before starting the application
-CMD service network-manager start && \
-    tail -f /dev/null & \
-    python app.py
+# Copy the supervisord configuration file
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Start supervisord to manage NetworkManager and the Python app
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
