@@ -217,6 +217,11 @@ def main1():
 # Run the main function
 if __name__ == "__main__":
     main1()
+
+    # Keep the script running
+    while True:
+        time.sleep(60)  # Sleep for 1 minute
+        
     # print("Connecting to Hana...")
     # hana_connection = None
     # hana_cursor = None
