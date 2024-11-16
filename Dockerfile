@@ -18,6 +18,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Ensure NetworkManager is running before starting the application
-CMD service network-manager start && \
-    tail -f /dev/null & \
-    python app.py
+# CMD service network-manager start && \
+#     tail -f /dev/null & \
+#     python app.py
+
+
+CMD python app.py
