@@ -186,13 +186,13 @@ def store_crias_ordenes_recepcion(conn, cursor, df, batch_size=500, max_workers=
             for record in df.itertuples(index=False, name=None)]  # Access fields by index    
     try:
         # Prepare the list of ids for the query and avoid executing empty queries
-        id_sap_list = df['id_sap'].tolist()
-        if not id_sap_list:  # If the list is empty, skip the query
+        orden_compra_list = df['orden_compra'].tolist()
+        if not orden_compra_list:  # If the list is empty, skip the query
             print("No id_sap to process, skipping database operations.")
             return
 
         # Fetch existing id_sap from the database to determine which records to update or insert
-        cursor.execute("SELECT trim(id_sap) FROM crias_ordenes_recepcion WHERE id_sap IN %s", (tuple(id_sap_list),))
+        cursor.execute("SELECT trim(orden_compra) FROM crias_ordenes_recepcion WHERE orden_compra IN %s", (tuple(orden_compra_list),))
 
         # Check if there are any results before calling fetchall()
         if cursor.rowcount == 0:
@@ -317,21 +317,21 @@ def store_transferencias_alimento(conn, cursor, df, batch_size=500, max_workers=
             sql_update = """
                 UPDATE alimento_ordenes
                 SET cantidad_kg = %s,
-                disponible_kg = %s,
-                creation_date = now()
+                    disponible_kg = %s,
+                    creation_date = now()
                 WHERE id_sap = %s;
             """
             update_records = [(r[2], r[2], r[0]) for r in batch]
             psycopg2.extras.execute_batch(cursor, sql_update, update_records)
-            conn.commit()
+            conn.commit() 
 
         # Function to perform batch insert
         def batch_insert(batch):
             sql_insert = """
                 INSERT INTO alimento_ordenes (id_sap, num_orden, cantidad_kg, status, creation_date, "granjaIdId", codigo_alimento, tipo_alimento, etapa, disponible_kg)
-                VALUES (%s, %s, %s, 'ACTIVO', now(), %s, %s, %s, %s);
+                VALUES (%s, %s, %s, 'ACTIVO', now(), %s, %s, %s, %s, %s);
             """
-            insert_records = [(r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[1]) for r in batch]
+            insert_records = [(r[0], r[1], float(r[2]), r[3], r[4], r[5], r[6], float(r[2])) for r in batch]
             if not batch:  # Check if batch is empty before attempting to insert
                 print("No data to insert")
                 return

@@ -111,6 +111,7 @@ def insert_transfer_incubator_fattering_data(engine, conn, cursor, df_incubator_
         
         # Query from the temporary food transfer
         df_incubator_fattering_temp = query_postgres(conn, cursor, qh.query_trasnfer_incubator_fattening_temp)
+        print(df_incubator_fattering_temp)
         print("Reading from temp_incubadoras_engorde...")
         operations.store_incubator_fattering_orders(conn, cursor, df_incubator_fattering_temp) if len(df_incubator_fattering_temp) > 0 else print("No data to insert.")
     else:
