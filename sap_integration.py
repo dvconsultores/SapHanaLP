@@ -4,6 +4,10 @@ from requests import Session
 from requests.auth import HTTPBasicAuth
 import urllib3
 import requests
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 # Suppress warnings about unverified HTTPS requests
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -25,11 +29,11 @@ class NoRedirectSession(Session):
 
 # Define WSDL and connection settings
 # wsdl_url = "https://vhemsds4ci.sap.liderpollo.com:8000/sap/bc/srt/wsdl/flv_10002A111AD1/bndg_url/sap/bc/srt/rfc/sap/zws_services_api/150/zws_services_api/zws_services_api?sap-client=150"
-wsdl_url = "https://vhemsws1wd01.sap.liderpollo.com:44380/sap/bc/srt/wsdl/flv_10002A111AD1/bndg_url/sap/bc/srt/rfc/sap/zws_services_api/150/zws_services_api/zws_services_api?sap-client=150"
+wsdl_url = os.getenv('WSDL_URL')
 
 # Authentication setup
-username = "ABAPMAR"
-password = "Abap**2024"
+username = os.getenv('SAP_USER')
+password = os.getenv('SAP_PASSWORD')
 
 # Create a custom session with authentication
 session = NoRedirectSession()
