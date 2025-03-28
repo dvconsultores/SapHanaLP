@@ -35,38 +35,6 @@ pg_user = os.getenv('APP_USER')
 pg_password = os.getenv('APP_PASSWORD')
 pg_database = os.getenv('APP_DATABASE')
 
-class VPNController:
-    def __init__(self):
-        self.vpn_server = os.getenv('VPN_SERVER')
-        self.vpn_user = os.getenv('VPN_USER')
-        self.vpn_password = os.getenv('VPN_PASSWORD')
-        
-    def connect(self):
-        try:
-            # Start IPSec service
-            subprocess.run(['ipsec', 'start'], check=True)
-            
-            # Initiate connection
-            subprocess.run(['ipsec', 'up', 'liderpollo'], check=True)
-            
-            # Start L2TP connection
-            with open('/var/run/xl2tpd/l2tp-control', 'w') as f:
-                f.write('c liderpollo')
-                
-            time.sleep(2)  # Wait for connection
-            return True
-        except subprocess.CalledProcessError as e:
-            print(f"VPN Connection failed: {e}")
-            return False
-
-    def disconnect(self):
-        try:
-            subprocess.run(['ipsec', 'down', 'liderpollo'], check=True)
-            return True
-        except subprocess.CalledProcessError as e:
-            print(f"VPN Disconnection failed: {e}")
-            return False
-
 
 # Function to check if VPN is already connected
 def is_vpn_connected():
@@ -103,16 +71,15 @@ def connect_vpn():
 
     print(f"Attempting to bring up VPN connection: {vpn_name}")
     process = subprocess.Popen(f"ipsec up {vpn_name}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    time.sleep(5)
-    
     stdout, stderr = process.communicate()
-
-    if process.returncode == 0:
+    
+    if process.returncode == 0 and b'IKE_SA' in stdout:
         print(f"VPN {vpn_name} connected successfully.")
         return True
     else:
         print(f"Failed to connect to VPN:\n{stderr.decode()}\n{stdout.decode()}")
         return False    
+ 
 
 # Function to disconnect VPN using nmcli
 def disconnect_vpn():
@@ -188,7 +155,7 @@ def main():
                 hana_cursor.close()
             if hana_connection:
                 hana_connection.close()
-            # disconnect_vpn()
+            disconnect_vpn()
     else:
         print("Failed to connect to VPN. Exiting.")
         return  # or exit the script if this is the main function
