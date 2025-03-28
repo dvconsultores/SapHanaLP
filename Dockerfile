@@ -2,13 +2,12 @@
 FROM python:3.11-slim AS python_env
 
 # Install VPN dependencies
-# Install VPN and other dependencies
-RUN apt-get update && \
-    apt-get install -y \
+RUN apt-get update \
+    && apt-get install -y \
     strongswan \
     xl2tpd \
     ppp \
-    nmcli \
+    network-manager \
     net-tools \
     && rm -rf /var/lib/apt/lists/*
 
