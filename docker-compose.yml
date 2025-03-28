@@ -1,23 +1,34 @@
 version: '3.8'
 
 services:
-  sap_hana_lp:
+  liderpollo-app:
     image: dvconsultores/sap_hana_lp:latest
     container_name: sap_hana_lp
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app
+      # VPN Configuration (can also use env_file)
+      - VPN_SERVER=lider-pollo-hq-vbzczkzdkpc.dynamic-m.com
+      - VPN_USER=developer@dvconsultores.com
+      - VPN_PASSWORD=6xU2zcv9
+      - VPN_PSK=GEq3Bvg5DYpaCcq
     env_file:
-      - .env
-    command: ["python3", "app.py"]
+      - .env  # For other application-specific secrets
+    volumes:
+      - ./vpn:/etc/vpn  # Contains VPN config files
+    cap_add:
+      - NET_ADMIN  # Required for VPN
+    devices:
+      - /dev/ppp  # Required for PPP connection
+    command: ["python3", "app.py"]  # Let app control VPN
+    restart: unless-stopped
 
   watchtower:
     image: containrrr/watchtower
-    container_name: watchtower-test
+    container_name: watchtower
     restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_POLL_INTERVAL=30
-      - WATCHTOWER_DEBUG=true
+      - WATCHTOWER_POLL_INTERVAL=300

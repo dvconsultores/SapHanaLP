@@ -28,7 +28,6 @@ class NoRedirectSession(Session):
 
 
 # Define WSDL and connection settings
-# wsdl_url = "https://vhemsds4ci.sap.liderpollo.com:8000/sap/bc/srt/wsdl/flv_10002A111AD1/bndg_url/sap/bc/srt/rfc/sap/zws_services_api/150/zws_services_api/zws_services_api?sap-client=150"
 wsdl_url = os.getenv('WSDL_URL')
 
 # Authentication setup
@@ -60,18 +59,18 @@ try:
 
     # Define parameters
     params = {
-        "I_CHARG": "12345",  # Lote
-        "I_BUDAT": "2024-11-26",  # Fecha de contabilización
-        "I_ERFMG": 1000,  # Cantidad
-        "I_WERKS": "G123",  # Granjas Id
-        "I_LGORT": "Galpón1",  # Galpón
-        "I_MBLNR": "ORD456",  # Orden de recepción
-        "I_MATNR": "Mat789",  # Material
-        "I_PROCESO": "Cria",  # Proceso
+        "ICharg": "12345",  # Lote (char10)
+        "IBudat": "2024-11-26",  # Fecha de contabilización (date10)
+        "IErfmg": 1000,  # Cantidad (quantum13.3)
+        "IWerks": "G123",  # Granjas Id (char4)
+        "ILgort": "GAL1",  # Galpón (char4) - Note: max 4 chars!
+        "IMblnr": "ORD456",  # Orden de recepción (char10)
+        "IMatnr": "Mat789",  # Material (char40)
+        "IProceso": "Cria",  # Proceso (char10)
     }
 
     # Call the service method
-    response = client.service.ZWS_Services_API(**params)
+    response = client.service.ZwsTasaMortalidad(**params)
     print("Response from SAP:", response)
 except requests.exceptions.RequestException as e:
     print(f"Redirect or network error: {e}")

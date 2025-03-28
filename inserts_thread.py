@@ -111,8 +111,24 @@ def insert_transfer_incubator_fattering_data(engine, conn, cursor, df_incubator_
         
         # Query from the temporary food transfer
         df_incubator_fattering_temp = query_postgres(conn, cursor, qh.query_trasnfer_incubator_fattening_temp)
-        print(df_incubator_fattering_temp)
+        # print(df_incubator_fattering_temp)
         print("Reading from temp_incubadoras_engorde...")
         operations.store_incubator_fattering_orders(conn, cursor, df_incubator_fattering_temp) if len(df_incubator_fattering_temp) > 0 else print("No data to insert.")
     else:
-        print("No transfer food data to insert (either query returned None or DataFrame is empty).")                 
+        print("No transfer food data to insert (either query returned None or DataFrame is empty).") 
+
+
+# Function to perform trasfer from fattering to production
+def insert_ordenes_salida_cria_produccion(engine, conn, cursor, df_ordenes_salida_cria_produccion):
+    if df_ordenes_salida_cria_produccion is not None and not df_ordenes_salida_cria_produccion.empty:
+        df_ordenes_salida_cria_produccion.to_sql('temp_ordenes_salida_cria_produccion', engine, if_exists='replace', index=False)
+        print("Temporary table temp_ordenes_salida_cria_produccion created")
+        time.sleep(3)  # wait for 3 seconds before reading the temp table
+        
+        # Query from the temporary food transfer
+        df_ordenes_salida_cria_produccion_temp = query_postgres(conn, cursor, qh.temp_query_ordenes_salida_cria_produccion)
+        # print(df_ordenes_salida_cria_produccion_temp)
+        print("Reading from temp_incubadoras_engorde...")
+        operations.store_ordenes_salida_cria_produccion(conn, cursor, df_ordenes_salida_cria_produccion_temp) if len(df_ordenes_salida_cria_produccion_temp) > 0 else print("No data to insert.")
+    else:
+        print("No data to transfer.")                         

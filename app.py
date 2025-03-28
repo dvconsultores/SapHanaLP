@@ -20,7 +20,7 @@ from sqlalchemy import create_engine, text
 load_dotenv()
 
 # VPN connection name
-vpn_name = os.getenv('VPN_NAME')
+vpn_name = 'LiderPollo' # os.getenv('VPN_NAME')
 
 # SAP HANA connection credentials
 hana_host = os.getenv('HANA_HOST')
@@ -34,6 +34,38 @@ pg_port = 25060
 pg_user = os.getenv('APP_USER')
 pg_password = os.getenv('APP_PASSWORD')
 pg_database = os.getenv('APP_DATABASE')
+
+class VPNController:
+    def __init__(self):
+        self.vpn_server = os.getenv('VPN_SERVER')
+        self.vpn_user = os.getenv('VPN_USER')
+        self.vpn_password = os.getenv('VPN_PASSWORD')
+        
+    def connect(self):
+        try:
+            # Start IPSec service
+            subprocess.run(['ipsec', 'start'], check=True)
+            
+            # Initiate connection
+            subprocess.run(['ipsec', 'up', 'liderpollo'], check=True)
+            
+            # Start L2TP connection
+            with open('/var/run/xl2tpd/l2tp-control', 'w') as f:
+                f.write('c liderpollo')
+                
+            time.sleep(2)  # Wait for connection
+            return True
+        except subprocess.CalledProcessError as e:
+            print(f"VPN Connection failed: {e}")
+            return False
+
+    def disconnect(self):
+        try:
+            subprocess.run(['ipsec', 'down', 'liderpollo'], check=True)
+            return True
+        except subprocess.CalledProcessError as e:
+            print(f"VPN Disconnection failed: {e}")
+            return False
 
 
 # Function to check if VPN is already connected
@@ -105,43 +137,46 @@ def query_hana(connection, cursor, query):
 def main():
     time_start = time.time()
     # Step 1: Connect to VPN and SAP HANA
-    # if connect_vpn():
-    time.sleep(1)  # wait 1 second
-    print("Performing queries")
-    hana_connection = None
-    hana_cursor = None
-    try:
-        # Establish a single SAP HANA connection
-        hana_connection = dbapi.connect(
-            address=hana_host,
-            port=hana_port,
-            user=hana_user,
-            password=hana_password
-        )
-        hana_cursor = hana_connection.cursor()
+    vpn = VPNController()
+    if vpn.connect():
+        time.sleep(1)  # wait 1 second
+        print("Performing queries")
+        hana_connection = None
+        hana_cursor = None
+        try:
+            # Establish a single SAP HANA connection
+            hana_connection = dbapi.connect(
+                address=hana_host,
+                port=hana_port,
+                user=hana_user,
+                password=hana_password
+            )
+            hana_cursor = hana_connection.cursor()
 
-        # Query farms data
-        df_farms = query_hana(hana_connection, hana_cursor, qh.query_farms)
-        # Query warehouse data
-        df_warehouse = query_hana(hana_connection, hana_cursor, qh.query_warehouse)
-        # Query transport data
-        df_transport = query_hana(hana_connection, hana_cursor, qh.query_transport)
-        # Query purchase orders data
-        df_purchase_orders = query_hana(hana_connection, hana_cursor, qh.query_purchase_orders)
-        # Query query_transfer_food_farms
-        df_transfer_food_farms = query_hana(hana_connection, hana_cursor, qh.query_transfer_food_farms)
-        # Query incubator fattering orders
-        df_incubator_fattering = query_hana(hana_connection, hana_cursor, qh.query_trasnfer_incubator_fattening)
-    finally:
-        # Step 2: Disconnect VPN and close SAP HANA connection after all queries
-        if hana_cursor:
-            hana_cursor.close()
-        if hana_connection:
-            hana_connection.close()
-        # disconnect_vpn()
-# else:
-#     print("Failed to connect to VPN. Exiting.")
-#     return  # or exit the script if this is the main function
+            # Query farms data
+            df_farms = query_hana(hana_connection, hana_cursor, qh.query_farms)
+            # Query warehouse data
+            df_warehouse = query_hana(hana_connection, hana_cursor, qh.query_warehouse)
+            # Query transport data
+            df_transport = query_hana(hana_connection, hana_cursor, qh.query_transport)
+            # Query purchase orders data
+            df_purchase_orders = query_hana(hana_connection, hana_cursor, qh.query_purchase_orders)
+            # Query query_transfer_food_farms
+            df_transfer_food_farms = query_hana(hana_connection, hana_cursor, qh.query_transfer_food_farms)
+            # Query incubator fattering orders
+            df_incubator_fattering = query_hana(hana_connection, hana_cursor, qh.query_trasnfer_incubator_fattening)
+            # Query Outbound Delivery
+            df_ordenes_salida_cria_produccion = query_hana(hana_connection, hana_cursor, qh.query_ordenes_salida_cria_produccion)
+        finally:
+            # Step 2: Disconnect VPN and close SAP HANA connection after all queries
+            if hana_cursor:
+                hana_cursor.close()
+            if hana_connection:
+                hana_connection.close()
+            # disconnect_vpn()
+    else:
+        print("Failed to connect to VPN. Exiting.")
+        return  # or exit the script if this is the main function
 
     time.sleep(1)  # wait 1 second
 
@@ -177,14 +212,16 @@ def main():
         with ThreadPoolExecutor(max_workers=32) as executor:
             # Submit tasks to the executor
             futures = []
-            time.sleep(1)  # wait for 3 seconds before inserting the next table
+            time.sleep(3)  # wait for 3 seconds before inserting the next table
             futures.append(executor.submit(it.insert_warehouse_data, engine, conn, cursor, df_warehouse))  # warehouse
-            time.sleep(1)  # wait for 3 seconds before inserting the next table
+            time.sleep(3)  # wait for 3 seconds before inserting the next table
             futures.append(executor.submit(it.insert_crias_ordenes_recepcion_data, engine, conn, cursor, df_purchase_orders))  # purchase orders
-            time.sleep(1)  # wait for 3 seconds before inserting the next table
+            time.sleep(3)  # wait for 3 seconds before inserting the next table
             futures.append(executor.submit(it.insert_transfer_food_farms_data, engine, conn, cursor, df_transfer_food_farms))  # transfer food farms
-            time.sleep(1)  # wait for 3 seconds before inserting the next table
+            time.sleep(3)  # wait for 3 seconds before inserting the next table
             futures.append(executor.submit(it.insert_transfer_incubator_fattering_data, engine, conn, cursor, df_incubator_fattering))  # incubator fattering
+            time.sleep(3)  # wait for 3 seconds before inserting the next table
+            futures.append(executor.submit(it.insert_ordenes_salida_cria_produccion, engine, conn, cursor, df_ordenes_salida_cria_produccion))  # outbound delivery
             # Process the results as they complete
             for future in as_completed(futures):
                 try:
@@ -226,25 +263,3 @@ if __name__ == "__main__":
     # while True:
     #     schedule.run_pending()
     #     time.sleep(60)
-
-    # print("Connecting to Hana...")
-    # hana_connection = None
-    # hana_cursor = None
-    # try:
-    #     # Establish a single SAP HANA connection
-    #     hana_connection = dbapi.connect(
-    #         address=hana_host,
-    #         port=hana_port,
-    #         user=hana_user,
-    #         password=hana_password
-    #     )
-    #     hana_cursor = hana_connection.cursor()
-    #     df = query_hana(hana_connection, hana_cursor, qh.query_inventories)
-    #     print(df)
-    #     if df is not None:
-    #         # Convertir la columna 'CANTIDAD_EN_UM_ENTRADA' a numérico
-    #         df['CANTIDAD_EN_UM_ENTRADA'] = pd.to_numeric(df['CANTIDAD_EN_UM_ENTRADA'], errors='coerce')
-    #         df['CANTIDAD_EN_UM_PARALELA'] = pd.to_numeric(df['CANTIDAD_EN_UM_PARALELA'], errors='coerce')
-    #         df.to_excel('query_inventories.xlsx', index=False)
-    # except psycopg2.OperationalError as e:
-    #     print(f"Connection error: {e}")    

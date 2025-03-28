@@ -55,8 +55,8 @@ LEFT JOIN SAPHANADB.EKPO EKPO2
 INNER JOIN SAPHANADB.T001W ON EKPO1.WERKS = T001W.WERKS
 INNER JOIN SAPHANADB.EKKO ON EKPO1.EBELN = EKKO.EBELN -- Join with EKKO to get LIFNR
 WHERE T001W.NAME1 NOT LIKE '%NO USAR%' 
-  AND EKPO1.EBELN = '4500015040'
-  --AND EKPO1.AEDAT >= '20240301'
+  --AND EKPO1.EBELN = '4500015040'
+  AND EKPO1.AEDAT >= '20230301'
   AND EKPO1.MATNR = '000000000000110001' -- Material number for machos
 GROUP BY EKPO1.EBELN, EKPO1.UNIQUEID, EKKO.LIFNR, EKPO1.WERKS, EKPO1.MENGE, EKPO2.MENGE
 """
@@ -124,7 +124,9 @@ WHERE
     , '000000000000105002'
     , '000000000000105005'
     , '000000000000105006'
-    , '000000000000105025') -- CRIA, PRODUCCION Y ENGORDE
+    , '000000000000105025'
+    , '000000000000105016'
+    ) -- CRIA, PRODUCCION Y ENGORDE
     AND MATDOC.BUDAT >= '20240301'
 ORDER BY 
     MATDOC.BUDAT ASC;
@@ -139,7 +141,7 @@ SELECT
     , a."MATNR"
     , a."MAKTX"
     , CASE
-        WHEN a."MATNR" IN ('000000000000105012', '000000000000105003') THEN 'CRIA'
+        WHEN a."MATNR" IN ('000000000000105012', '000000000000105003', '000000000000105016') THEN 'CRIA'
         WHEN a."MATNR" IN ('000000000000105004', '000000000000105013', '000000000000105027', '000000000000105028', '000000000000105021', '000000000000105007') THEN 'PRODUCCION'
         WHEN a."MATNR" IN ('000000000000105001', '000000000000105002', '000000000000105005','000000000000105006', '000000000000105025') THEN 'ENGORDE'
         ELSE 'ENGORDE'
@@ -186,8 +188,53 @@ INNER JOIN
     granjas g ON a."granjaIdId" = g.id_sap
 INNER JOIN incubadoras b on a."incubadora" = b."id_sap"
 INNER JOIN transportes c on a."transporteIdId" = c."id_sap"
-"""     
+"""
 
+# Outbound Delivery
+query_ordenes_salida_cria_produccion = """
+SELECT 
+    MATDOC.AUFNR AS "orden",
+    MATDOC.WERKS AS "granjaOrigenIdId",
+    trim(MATDOC.UMWRK) AS "granjaDestinoIdId",
+    MATDOC.LGORT AS "almacen",
+    MATDOC.BUDAT AS "fecha",
+    SUM(MATDOC.ERFMG) AS "cantidad"
+FROM SAPHANADB.MATDOC
+WHERE MATDOC.BWART = '303'
+AND MATDOC.MATNR IN ('000000000000110002', '000000000000110003')
+AND MATDOC.AUFNR = '121000000016'
+AND MATDOC.WERKS IN ('2000', '2002')
+GROUP BY 
+    MATDOC.AUFNR,
+    MATDOC.WERKS,
+    MATDOC.UMWRK,
+    MATDOC.LGORT,
+    MATDOC.BUDAT
+ORDER BY MATDOC.BUDAT DESC
+"""   
+
+# Outbound Delivery
+temp_query_ordenes_salida_cria_produccion = """
+SELECT 
+    a.orden as id_sap,
+    a.orden,
+    a.cantidad,
+    b.id as granjaOrigenIdId,
+    c.id as granjaDestinoIdId,
+    '3730' as transporte,
+	d.id as galpon
+FROM 
+    temp_ordenes_salida_cria_produccion a
+INNER JOIN 
+    granjas b ON a."granjaOrigenIdId" = b.id_sap
+INNER JOIN 
+    granjas c ON a."granjaDestinoIdId" = c.id_sap
+INNER JOIN 
+    galpones d ON a.almacen = d.id_sap
+WHERE d."granjaIdId" = (select f.id 
+                         from temp_ordenes_salida_cria_produccion e 
+						 INNER JOIN granjas f ON e."granjaDestinoIdId" = f.id_sap  )
+"""    
 
 ##########################################################################################################################
 ##########################################################################################################################
@@ -241,6 +288,21 @@ ORDER BY
 # TIPO DE MOVIMIENTO 641
 # SALEN DEL 3000 incubadora
 # FILTROS GRANJA + MOVIMIENTO 641 + MATERIAL 000000000000120000 Y 000000000000120005 , AGREGAR EN EL ADMIN ESA LISTA
+# en app recepcion y distribucion de aves, agregar granja, numero de documento
+
+
+# Transferencia de gallinas a reproductoras
+# MATDOC
+# TIPO DE MOVIMIENTO 303
+# SALEN DEL 3000 incubadora
+# FILTROS GRANJA + MOVIMIENTO 303 + MATERIAL 000000000000110002
+# en app recepcion y distribucion de aves, agregar granja, numero de documento
+
+# Transferencia de machos a reproductoras
+# MATDOC
+# TIPO DE MOVIMIENTO 303
+# SALEN DEL 3000 incubadora
+# FILTROS GRANJA + MOVIMIENTO 303 + MATERIAL 000000000000110003
 # en app recepcion y distribucion de aves, agregar granja, numero de documento
 
 
