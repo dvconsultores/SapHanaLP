@@ -47,11 +47,11 @@ class VPNController:
             subprocess.run(['ipsec', 'start'], check=True)
             
             # Initiate connection
-            subprocess.run(['ipsec', 'up', 'LP'], check=True)
+            subprocess.run(['ipsec', 'up', 'liderpollo'], check=True)
             
             # Start L2TP connection
             with open('/var/run/xl2tpd/l2tp-control', 'w') as f:
-                f.write('c LP')
+                f.write('c liderpollo')
                 
             time.sleep(2)  # Wait for connection
             return True
@@ -61,7 +61,7 @@ class VPNController:
 
     def disconnect(self):
         try:
-            subprocess.run(['ipsec', 'down', 'LP'], check=True)
+            subprocess.run(['ipsec', 'down', 'liderpollo'], check=True)
             return True
         except subprocess.CalledProcessError as e:
             print(f"VPN Disconnection failed: {e}")
@@ -79,24 +79,40 @@ def is_vpn_connected():
     return process.returncode == 0
 
 # Function to connect to VPN using nmcli
-def connect_vpn():
-    if is_vpn_connected():
-        print(f"VPN {vpn_name} is already connected.")
-        return True
+# def connect_vpn():
+#     if is_vpn_connected():
+#         print(f"VPN {vpn_name} is already connected.")
+#         return True
 
-    print(f"Connecting to VPN: {vpn_name}...")
-    vpn_command = f"nmcli con up id '{vpn_name}'"
+#     print(f"Connecting to VPN: {vpn_name}...")
+#     vpn_command = f"nmcli con up id '{vpn_name}'"
     
-    process = subprocess.Popen(vpn_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    time.sleep(5)  # Wait a few seconds to establish the VPN connection
+#     process = subprocess.Popen(vpn_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#     time.sleep(5)  # Wait a few seconds to establish the VPN connection
+    
+#     stdout, stderr = process.communicate()
+#     if process.returncode == 0:
+#         print(f"VPN {vpn_name} connected successfully.")
+#         return True
+#     else:
+#         print(f"Failed to connect to VPN: {stderr.decode()}")
+#         return False
+    
+def connect_vpn():
+    vpn_name = "LP"
+
+    print(f"Attempting to bring up VPN connection: {vpn_name}")
+    process = subprocess.Popen(f"ipsec up {vpn_name}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    time.sleep(5)
     
     stdout, stderr = process.communicate()
+
     if process.returncode == 0:
         print(f"VPN {vpn_name} connected successfully.")
         return True
     else:
-        print(f"Failed to connect to VPN: {stderr.decode()}")
-        return False
+        print(f"Failed to connect to VPN:\n{stderr.decode()}\n{stdout.decode()}")
+        return False    
 
 # Function to disconnect VPN using nmcli
 def disconnect_vpn():
@@ -137,8 +153,7 @@ def query_hana(connection, cursor, query):
 def main():
     time_start = time.time()
     # Step 1: Connect to VPN and SAP HANA
-    vpn = VPNController()
-    if vpn.connect():
+    if connect_vpn():
         time.sleep(1)  # wait 1 second
         print("Performing queries")
         hana_connection = None
