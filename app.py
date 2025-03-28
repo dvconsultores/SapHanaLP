@@ -47,11 +47,11 @@ class VPNController:
             subprocess.run(['ipsec', 'start'], check=True)
             
             # Initiate connection
-            subprocess.run(['ipsec', 'up', 'liderpollo'], check=True)
+            subprocess.run(['ipsec', 'up', 'LP'], check=True)
             
             # Start L2TP connection
             with open('/var/run/xl2tpd/l2tp-control', 'w') as f:
-                f.write('c liderpollo')
+                f.write('c LP')
                 
             time.sleep(2)  # Wait for connection
             return True
@@ -61,7 +61,7 @@ class VPNController:
 
     def disconnect(self):
         try:
-            subprocess.run(['ipsec', 'down', 'liderpollo'], check=True)
+            subprocess.run(['ipsec', 'down', 'LP'], check=True)
             return True
         except subprocess.CalledProcessError as e:
             print(f"VPN Disconnection failed: {e}")
