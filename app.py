@@ -72,13 +72,16 @@ def connect_vpn():
     print(f"Attempting to bring up VPN connection: {vpn_name}")
     process = subprocess.Popen(f"ipsec up {vpn_name}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
-    
-    if process.returncode == 0 and b'IKE_SA' in stdout:
+
+    output = stdout + stderr
+
+    if process.returncode == 0 and b"connection 'LP' established successfully" in output:
         print(f"VPN {vpn_name} connected successfully.")
         return True
     else:
-        print(f"Failed to connect to VPN:\n{stderr.decode()}\n{stdout.decode()}")
-        return False    
+        print(f"Failed to connect to VPN:\n{output.decode()}")
+        return False
+
  
 
 # Function to disconnect VPN using nmcli
