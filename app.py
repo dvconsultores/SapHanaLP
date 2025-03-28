@@ -86,16 +86,17 @@ def connect_vpn():
 
 # Function to disconnect VPN using nmcli
 def disconnect_vpn():
+    vpn_name = "LP"
     print(f"Disconnecting VPN: {vpn_name}...")
-    vpn_command = f"nmcli con down id '{vpn_name}'"
-    
-    process = subprocess.Popen(vpn_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    process = subprocess.Popen(f"ipsec down {vpn_name}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
-    
+
     if process.returncode == 0:
         print(f"VPN {vpn_name} disconnected successfully.")
     else:
-        print(f"Failed to disconnect VPN: {stderr.decode()}")
+        print(f"Failed to disconnect VPN:\n{stderr.decode()}\n{stdout.decode()}")
+
 
 # Function to query SAP HANA using an open connection and cursor
 def query_hana(connection, cursor, query):
