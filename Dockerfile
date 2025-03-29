@@ -16,6 +16,9 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Ensure runtime directory exists for xl2tpd
+RUN mkdir -p /var/run/xl2tpd
+
 # Set the working directory
 WORKDIR /app
 
