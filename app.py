@@ -35,7 +35,7 @@ pg_user = os.getenv('APP_USER')
 pg_password = os.getenv('APP_PASSWORD')
 pg_database = os.getenv('APP_DATABASE')
 
-########################RUN VPN LOCALLY########################
+# ########################RUN VPN LOCALLY########################
 # # Function to check if VPN is already connected
 # def is_vpn_connected():
 #     vpn_status_command = f"nmcli con show --active | grep '{vpn_name}'"
@@ -285,13 +285,13 @@ if __name__ == "__main__":
     main()
 
     # Schedule the job to run at specific times
-    # print("Scheduling job...")
-    # schedule.every().day.at("06:00").do(job)
-    # schedule.every().day.at("10:00").do(job)
-    # schedule.every().day.at("14:00").do(job)
-    # schedule.every().day.at("18:00").do(job)
+    print("Scheduling job...")
+    schedule.every().day.at("06:00").do(job)
+    schedule.every().day.at("10:00").do(job)
+    schedule.every().day.at("14:00").do(job)
+    schedule.every().day.at("18:00").do(job)
 
     # # Keep the script running
-    # while True:
-    #     schedule.run_pending()
-    #     time.sleep(60)
+    while True:
+         schedule.run_pending()
+         time.sleep(60)

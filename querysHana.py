@@ -236,6 +236,52 @@ WHERE d."granjaIdId" = (select f.id
 						 INNER JOIN granjas f ON e."granjaDestinoIdId" = f.id_sap  )
 """    
 
+
+# Outbound Delivery
+query_ordenes_salida_reproductora_incubadora = """
+SELECT 
+    MATDOC.AUFNR AS "orden",
+    MATDOC.WERKS AS "granjaOrigenIdId",
+    '3000' AS "granjaDestinoIdId",
+    MATDOC.LGORT AS "almacen",
+    MATDOC.BUDAT AS "fecha",
+    SUM(MATDOC.ERFMG) AS "cantidad"
+FROM SAPHANADB.MATDOC
+WHERE MATDOC.BWART = '101'
+AND MATDOC.MATNR IN ('000000000000115000')
+AND MATDOC.AUFNR = '700200000022'
+--AND MATDOC.WERKS IN ('2000', '2002')
+AND MATDOC.BUDAT >= '20240301'
+GROUP BY 
+    MATDOC.AUFNR,
+    MATDOC.WERKS,
+    MATDOC.UMWRK,
+    MATDOC.LGORT,
+    MATDOC.BUDAT
+ORDER BY MATDOC.BUDAT DESC
+"""   
+
+# Outbound Delivery
+temp_query_ordenes_salida_reproductora_incubadora = """
+SELECT 
+    a.orden as id_sap,
+    a.orden,
+    a.cantidad,
+    b.id as granjaOrigenIdId,
+    c.id as granjaDestinoIdId,
+    '3730' as transporte,
+	d.id as galpon
+FROM 
+    temp_ordenes_salida_cria_produccion a
+INNER JOIN 
+    granjas b ON a."granjaOrigenIdId" = b.id_sap
+INNER JOIN 
+    granjas c ON a."granjaDestinoIdId" = c.id_sap
+INNER JOIN 
+    galpones d ON a.almacen = d.id_sap
+WHERE d."granjaIdId" = (select f.id 
+                         from temp_ordenes_salida_cria_produccion e 
+						 INNER JOIN granjas f ON e."granjaDestinoIdId" = f.id_sap  )
 ##########################################################################################################################
 ##########################################################################################################################
 ##########################################################################################################################
