@@ -20,7 +20,7 @@ from sqlalchemy import create_engine, text
 load_dotenv()
 
 # VPN connection name
-vpn_name = 'LiderPollo' # os.getenv('VPN_NAME')
+vpn_name = 'LP' # os.getenv('VPN_NAME')
 
 # SAP HANA connection credentials
 hana_host = os.getenv('HANA_HOST')
@@ -35,8 +35,54 @@ pg_user = os.getenv('APP_USER')
 pg_password = os.getenv('APP_PASSWORD')
 pg_database = os.getenv('APP_DATABASE')
 
+########################RUN VPN LOCALLY########################
+# # Function to check if VPN is already connected
+# def is_vpn_connected():
+#     vpn_status_command = f"nmcli con show --active | grep '{vpn_name}'"
+    
+#     process = subprocess.Popen(vpn_status_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#     stdout, stderr = process.communicate()
+    
+#     # If stdout contains any output, the VPN is connected
+#     return process.returncode == 0
 
+# # Function to connect to VPN using nmcli
+# def connect_vpn():
+#     if is_vpn_connected():
+#         print(f"VPN {vpn_name} is already connected.")
+#         return True
 
+#     print(f"Connecting to VPN: {vpn_name}...")
+#     vpn_command = f"nmcli con up id '{vpn_name}'"
+    
+#     process = subprocess.Popen(vpn_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#     time.sleep(5)  # Wait a few seconds to establish the VPN connection
+    
+#     stdout, stderr = process.communicate()
+#     if process.returncode == 0:
+#         print(f"VPN {vpn_name} connected successfully.")
+#         return True
+#     else:
+#         print(f"Failed to connect to VPN: {stderr.decode()}")
+#         return False
+
+# # Function to disconnect VPN using nmcli
+# def disconnect_vpn():
+#     print(f"Disconnecting VPN: {vpn_name}...")
+#     vpn_command = f"nmcli con down id '{vpn_name}'"
+    
+#     process = subprocess.Popen(vpn_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#     stdout, stderr = process.communicate()
+    
+#     if process.returncode == 0:
+#         print(f"VPN {vpn_name} disconnected successfully.")
+#     else:
+#         print(f"Failed to disconnect VPN: {stderr.decode()}")
+
+############RUN VPN IN DOCKER CONTAINER########################
+# Function to check if VPN is already connected
+# Check if the VPN is connected by checking the presence of the ppp0 interface
+# This is a common interface name for VPN connections
 def is_vpn_connected():
     """Check if VPN (ppp0) is up."""
     try:
@@ -46,7 +92,9 @@ def is_vpn_connected():
         print(f"[ERROR] Checking VPN status failed: {e}")
         return False
 
-
+# Function to connect to VPN using xl2tpd and ipsec
+# This function assumes that xl2tpd and ipsec are installed and configured correctly
+# It uses subprocess to run shell commands
 def connect_vpn():
     """Start IPsec + L2TP tunnel if not already connected."""
     if is_vpn_connected():
@@ -86,7 +134,7 @@ def connect_vpn():
     print("[ERROR] VPN failed to come up.")
     return False
 
-
+# Function to disconnect the VPN
 def disconnect_vpn():
     """Tear down VPN connections."""
     print("[INFO] Disconnecting IPsec...")
@@ -157,7 +205,7 @@ def main():
                 hana_cursor.close()
             if hana_connection:
                 hana_connection.close()
-            disconnect_vpn()
+            # disconnect_vpn()
     else:
         print("Failed to connect to VPN. Exiting.")
         return  # or exit the script if this is the main function
