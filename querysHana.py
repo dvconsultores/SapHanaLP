@@ -281,7 +281,7 @@ INNER JOIN
     galpones d ON a.almacen = d.id_sap
 WHERE d."granjaIdId" = (select f.id 
                          from temp_ordenes_salida_cria_produccion e 
-						 INNER JOIN granjas f ON e."granjaDestinoIdId" = f.id_sap  )
+						 INNER JOIN granjas f ON e."granjaDestinoIdId" = f.id_sap  )"""
 ##########################################################################################################################
 ##########################################################################################################################
 ##########################################################################################################################
