@@ -1,31 +1,39 @@
-version: '3.8'
-
 services:
   liderpollo-app:
+    mem_limit: 2g           # 2 GB RAM
+    memswap_limit: 3g       # 2 GB RAM + 1 GB Swap
     image: dvconsultores/sap_hana_lp:latest
     container_name: sap_hana_lp
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONPATH=/app
-      # VPN Configuration (can also use env_file)
-      - VPN_SERVER=lider-pollo-hq-vbzczkzdkpc.dynamic-m.com
-      - VPN_USER=developer@dvconsultores.com
-      - VPN_PASSWORD=6xU2zcv9
-      - VPN_PSK=GEq3Bvg5DYpaCcq
     env_file:
-      - .env  # For other application-specific secrets
-    volumes:
-      - ./vpn:/etc/vpn  # Contains VPN config files
+      - .env 
     cap_add:
-      - NET_ADMIN  # Required for VPN
+      - NET_ADMIN
     devices:
-      - /dev/ppp  # Required for PPP connection
-    command: ["python3", "app.py"]  # Let app control VPN
+      - /dev/ppp
+      - /dev/net/tun
+    sysctls:
+      - net.ipv4.ip_forward=1
+    volumes:
+      - ./vpn/ipsec.conf:/etc/ipsec.conf
+      - ./vpn/ipsec.secrets:/etc/ipsec.secrets
+      - ./vpn/xl2tpd.conf:/etc/xl2tpd/xl2tpd.conf
+      - ./vpn/options.l2tpd.client:/etc/ppp/options.l2tpd.client
+      - ./entrypoint.sh:/entrypoint.sh
+    working_dir: /app
+    entrypoint: ["/bin/sh", "-c", "/entrypoint.sh && tail -f /dev/null"]
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
+    
   watchtower:
     image: containrrr/watchtower
-    container_name: watchtower
+    container_name: watchtower-lp-sap-hana
     restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock

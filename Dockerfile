@@ -4,7 +4,6 @@ FROM python:3.11-slim AS python_env
 
 # Install VPN and Python dependencies
 RUN apt-get update && apt-get install -y \
-    iputils-ping \
     strongswan \
     xl2tpd \
     ppp \
@@ -12,9 +11,11 @@ RUN apt-get update && apt-get install -y \
     iproute2 \
     net-tools \
     curl \
+    netcat-openbsd \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+    
 # Ensure runtime directory exists for xl2tpd
 RUN mkdir -p /var/run/xl2tpd
 
