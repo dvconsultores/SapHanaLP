@@ -236,80 +236,10 @@ WHERE d."granjaIdId" = (select f.id
 						 INNER JOIN granjas f ON e."granjaDestinoIdId" = f.id_sap  )
 """    
 
+##########################################################################################################################
+##########################################################################################################################
+##########################################################################################################################
 
-# Outbound Delivery
-query_ordenes_salida_reproductora_incubadora = """
-SELECT 
-    MATDOC.AUFNR AS "orden",
-    MATDOC.WERKS AS "granjaOrigenIdId",
-    '3000' AS "granjaDestinoIdId",
-    MATDOC.LGORT AS "almacen",
-    MATDOC.BUDAT AS "fecha",
-    SUM(MATDOC.ERFMG) AS "cantidad"
-FROM SAPHANADB.MATDOC
-WHERE MATDOC.BWART = '101'
-AND MATDOC.MATNR IN ('000000000000115000')
-AND MATDOC.AUFNR = '700200000022'
---AND MATDOC.WERKS IN ('2000', '2002')
-AND MATDOC.BUDAT >= '20240301'
-GROUP BY 
-    MATDOC.AUFNR,
-    MATDOC.WERKS,
-    MATDOC.UMWRK,
-    MATDOC.LGORT,
-    MATDOC.BUDAT
-ORDER BY MATDOC.BUDAT DESC
-"""   
-
-# Outbound Delivery
-temp_query_ordenes_salida_reproductora_incubadora = """
-SELECT 
-    a.orden as id_sap,
-    a.orden,
-    a.cantidad,
-    b.id as granjaOrigenIdId,
-    c.id as granjaDestinoIdId,
-    '3730' as transporte,
-	d.id as galpon
-FROM 
-    temp_ordenes_salida_cria_produccion a
-INNER JOIN 
-    granjas b ON a."granjaOrigenIdId" = b.id_sap
-INNER JOIN 
-    granjas c ON a."granjaDestinoIdId" = c.id_sap
-INNER JOIN 
-    galpones d ON a.almacen = d.id_sap
-WHERE d."granjaIdId" = (select f.id 
-                         from temp_ordenes_salida_cria_produccion e 
-						 INNER JOIN granjas f ON e."granjaDestinoIdId" = f.id_sap  )"""
-##########################################################################################################################
-##########################################################################################################################
-##########################################################################################################################
-# Querys For testing tables only
-query = """
-SELECT 
-    MATDOC.BUDAT AS "Fecha",
-    MATDOC.MATNR AS "CodigoMaterial",
-    MAKT.MAKTX AS "DescMaterial",
-    MATDOC.MENGE AS "Cantidad Despachada",
-    MATDOC.WERKS AS "Centro",
-    MATDOC.LGORT AS "Almacén",
-    MATDOC.BWART AS "Tipo de Movimiento",
-    MATDOC.BUKRS AS "Centro de Entrega",  -- Agregado BURKS
-    MATDOC.MBLNR AS "Número de Documento",
-    MATDOC.EBELN AS "Orden de Transferencia"
-FROM 
-    SAPHANADB.MATDOC
-INNER JOIN 
-    SAPHANADB.MAKT ON MATDOC.MATNR = MAKT.MATNR
-WHERE 
-    MATDOC.BWART = '641'  -- Tipo de movimiento 641
-    --AND MATDOC.WERKS = '4089'  -- Centro desde el cual se despachó
-    --AND MATDOC.MATNR BETWEEN  '000000000000105000' AND '000000000000105999'
-    AND MATDOC.BUDAT >= '20240301' --'20240715'
-ORDER BY 
-    MATDOC.BUDAT ASC;
-"""
 
 # Transferencia de Alimento a granja  
 # MATDOC
