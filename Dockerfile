@@ -6,6 +6,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install VPN and Python dependencies
 RUN apt-get update && apt-get install -y \
+    iputils-ping \
     strongswan \
     xl2tpd \
     ppp \
