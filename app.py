@@ -36,56 +36,64 @@ pg_password = os.getenv('APP_PASSWORD')
 pg_database = os.getenv('APP_DATABASE')
 
 
-# Function to connect to VPN using nmcli
-# def connect_vpn():
-#     if is_vpn_connected():
-#         print(f"VPN {vpn_name} is already connected.")
-#         return True
 
-#     print(f"Connecting to VPN: {vpn_name}...")
-#     vpn_command = f"nmcli con up id '{vpn_name}'"
-    
-#     process = subprocess.Popen(vpn_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-#     time.sleep(5)  # Wait a few seconds to establish the VPN connection
-    
-#     stdout, stderr = process.communicate()
-#     if process.returncode == 0:
-#         print(f"VPN {vpn_name} connected successfully.")
-#         return True
-#     else:
-#         print(f"Failed to connect to VPN: {stderr.decode()}")
-#         return False
-    
-def connect_vpn():
-    vpn_name = "LP"
-
-    print(f"Attempting to bring up VPN connection: {vpn_name}")
-    process = subprocess.Popen(f"ipsec up {vpn_name}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-
-    output = stdout + stderr
-
-    if process.returncode == 0 and b"connection 'LP' established successfully" in output:
-        print(f"VPN {vpn_name} connected successfully.")
-        return True
-    else:
-        print(f"Failed to connect to VPN:\n{output.decode()}")
+def is_vpn_connected():
+    """Check if VPN (ppp0) is up."""
+    try:
+        result = subprocess.run(["ip", "a"], capture_output=True, text=True)
+        return "ppp0" in result.stdout
+    except Exception as e:
+        print(f"[ERROR] Checking VPN status failed: {e}")
         return False
 
- 
 
-# Function to disconnect VPN using nmcli
+def connect_vpn():
+    """Start IPsec + L2TP tunnel if not already connected."""
+    if is_vpn_connected():
+        print("[INFO] VPN is already connected.")
+        return True
+
+    print("[INFO] Starting IPsec tunnel...")
+    subprocess.run(["ipsec", "restart"])
+    time.sleep(5)
+
+    print("[INFO] Bringing up IPsec tunnel...")
+    up_result = subprocess.run(["ipsec", "up", "L2TP-PSK"], capture_output=True, text=True)
+    if up_result.returncode != 0:
+        print(f"[ERROR] Failed to bring up IPsec: {up_result.stderr}")
+        return False
+
+    print("[INFO] Starting xl2tpd...")
+    subprocess.run(["pkill", "xl2tpd"], stderr=subprocess.DEVNULL)
+    subprocess.run(["xl2tpd", "-c", "/etc/xl2tpd/xl2tpd.conf"])
+    time.sleep(5)
+
+    print("[INFO] Triggering L2TP tunnel...")
+    try:
+        with open("/var/run/xl2tpd/l2tp-control", "w") as f:
+            f.write("c LP\n")
+    except Exception as e:
+        print(f"[ERROR] Failed to trigger tunnel: {e}")
+        return False
+
+    print("[INFO] Waiting for ppp0 interface...")
+    for i in range(10):
+        if is_vpn_connected():
+            print("[INFO] VPN is up!")
+            return True
+        time.sleep(1)
+
+    print("[ERROR] VPN failed to come up.")
+    return False
+
+
 def disconnect_vpn():
-    vpn_name = "LP"
-    print(f"Disconnecting VPN: {vpn_name}...")
-
-    process = subprocess.Popen(f"ipsec down {vpn_name}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-
-    if process.returncode == 0:
-        print(f"VPN {vpn_name} disconnected successfully.")
-    else:
-        print(f"Failed to disconnect VPN:\n{stderr.decode()}\n{stdout.decode()}")
+    """Tear down VPN connections."""
+    print("[INFO] Disconnecting IPsec...")
+    subprocess.run(["ipsec", "down", "L2TP-PSK"], stderr=subprocess.DEVNULL)
+    subprocess.run(["pkill", "xl2tpd"], stderr=subprocess.DEVNULL)
+    subprocess.run(["ipsec", "stop"], stderr=subprocess.DEVNULL)
+    print("[INFO] VPN disconnected.")
 
 
 # Function to query SAP HANA using an open connection and cursor
