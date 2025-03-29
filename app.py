@@ -282,7 +282,7 @@ def job():
 # Run the main function
 if __name__ == "__main__":
     # Run the main function immediately when the container starts
-    main()
+    job()
 
     # Schedule the job to run at specific times
     print("Scheduling job...")
