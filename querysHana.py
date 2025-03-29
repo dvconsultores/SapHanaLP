@@ -239,7 +239,31 @@ WHERE d."granjaIdId" = (select f.id
 ##########################################################################################################################
 ##########################################################################################################################
 ##########################################################################################################################
-
+# Querys For testing tables only
+query = """
+SELECT 
+    MATDOC.BUDAT AS "Fecha",
+    MATDOC.MATNR AS "CodigoMaterial",
+    MAKT.MAKTX AS "DescMaterial",
+    MATDOC.MENGE AS "Cantidad Despachada",
+    MATDOC.WERKS AS "Centro",
+    MATDOC.LGORT AS "Almacén",
+    MATDOC.BWART AS "Tipo de Movimiento",
+    MATDOC.BUKRS AS "Centro de Entrega",  -- Agregado BURKS
+    MATDOC.MBLNR AS "Número de Documento",
+    MATDOC.EBELN AS "Orden de Transferencia"
+FROM 
+    SAPHANADB.MATDOC
+INNER JOIN 
+    SAPHANADB.MAKT ON MATDOC.MATNR = MAKT.MATNR
+WHERE 
+    MATDOC.BWART = '641'  -- Tipo de movimiento 641
+    --AND MATDOC.WERKS = '4089'  -- Centro desde el cual se despachó
+    --AND MATDOC.MATNR BETWEEN  '000000000000105000' AND '000000000000105999'
+    AND MATDOC.BUDAT >= '20240301' --'20240715'
+ORDER BY 
+    MATDOC.BUDAT ASC;
+"""
 
 # Transferencia de Alimento a granja  
 # MATDOC
