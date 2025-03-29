@@ -32,9 +32,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy rest of the project
 COPY . .
 
-# Copy the entrypoint (should be at project root)
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# # Copy the entrypoint (should be at project root)
+# COPY entrypoint.sh /entrypoint.sh
+# RUN chmod +x /entrypoint.sh
 
-# Entrypoint launches VPN and then Python app
-ENTRYPOINT ["/entrypoint.sh"]
+# # Entrypoint launches VPN and then Python app
+# ENTRYPOINT ["/entrypoint.sh"]
