@@ -1,35 +1,25 @@
 services:
   liderpollo-app:
-    mem_limit: 2g           # 2 GB RAM
-    memswap_limit: 3g       # 2 GB RAM + 1 GB Swap
     image: dvconsultores/sap_hana_lp:latest
     container_name: sap_hana_lp
+    network_mode: host
     environment:
       - PYTHONUNBUFFERED=1
     env_file:
-      - .env 
+      - .env   
     cap_add:
       - NET_ADMIN
     devices:
       - /dev/ppp
       - /dev/net/tun
-    sysctls:
-      - net.ipv4.ip_forward=1
     volumes:
       - ./vpn/ipsec.conf:/etc/ipsec.conf
       - ./vpn/ipsec.secrets:/etc/ipsec.secrets
       - ./vpn/xl2tpd.conf:/etc/xl2tpd/xl2tpd.conf
       - ./vpn/options.l2tpd.client:/etc/ppp/options.l2tpd.client
-      - ./supervisord.conf:/etc/supervisor/conf.d/supervisord.conf
-      - ../PruebasIntegracionDocker/entrypoint.sh:/app/entrypoint.sh
-    working_dir: /app
-    entrypoint: ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+      - ./entrypoint.sh:/entrypoint.sh
+    entrypoint: [ "/bin/sh", "-c", "/entrypoint.sh" ]
     restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
 
     
   watchtower:

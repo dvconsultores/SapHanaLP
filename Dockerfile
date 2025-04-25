@@ -28,12 +28,15 @@ COPY requirements.txt .
 # Install Python deps
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy rest of the project
+# Copy the rest of the project
 COPY . .
 
-# Install supervisor
-RUN pip install supervisor
+# Copy the supervisord configuration file
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Run the application using supervisor
-CMD ["supervisord", "-c", "/app/supervisord.conf"]
+# Expose the FastAPI port
+EXPOSE 8000
+
+# Run supervisord to manage processes
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
 
