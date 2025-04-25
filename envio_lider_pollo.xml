@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:sap-com:document:sap:soap:functions:mc-style">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <urn:ZwsTasaMortalidad>
+         <IBudat>2025-03-19</IBudat>
+         <ICharg>08082023M2</ICharg>
+         <IErfmg>75</IErfmg>
+         <ILgort>1006</ILgort>
+         <IMatnr>125001</IMatnr>
+         <IMblnr>5000112373</IMblnr>
+         <IProceso>C</IProceso>
+         <IWerks>5000</IWerks>
+      </urn:ZwsTasaMortalidad>
+   </soapenv:Body>
+</soapenv:Envelope>

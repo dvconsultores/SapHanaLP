@@ -199,6 +199,8 @@ def main():
             df_incubator_fattering = query_hana(hana_connection, hana_cursor, qh.query_trasnfer_incubator_fattening)
             # Query Outbound Delivery
             df_ordenes_salida_cria_produccion = query_hana(hana_connection, hana_cursor, qh.query_ordenes_salida_cria_produccion)
+            # Query salidas produccion aves
+            df_salidas_produccion_aves = query_hana(hana_connection, hana_cursor, qh.query_ordenes_salida_produccion_aves)
         finally:
             # Step 2: Disconnect VPN and close SAP HANA connection after all queries
             if hana_cursor:
@@ -244,16 +246,18 @@ def main():
         with ThreadPoolExecutor(max_workers=32) as executor:
             # Submit tasks to the executor
             futures = []
-            time.sleep(3)  # wait for 3 seconds before inserting the next table
-            futures.append(executor.submit(it.insert_warehouse_data, engine, conn, cursor, df_warehouse))  # warehouse
-            time.sleep(3)  # wait for 3 seconds before inserting the next table
-            futures.append(executor.submit(it.insert_crias_ordenes_recepcion_data, engine, conn, cursor, df_purchase_orders))  # purchase orders
-            time.sleep(3)  # wait for 3 seconds before inserting the next table
-            futures.append(executor.submit(it.insert_transfer_food_farms_data, engine, conn, cursor, df_transfer_food_farms))  # transfer food farms
-            time.sleep(3)  # wait for 3 seconds before inserting the next table
-            futures.append(executor.submit(it.insert_transfer_incubator_fattering_data, engine, conn, cursor, df_incubator_fattering))  # incubator fattering
-            time.sleep(3)  # wait for 3 seconds before inserting the next table
-            futures.append(executor.submit(it.insert_ordenes_salida_cria_produccion, engine, conn, cursor, df_ordenes_salida_cria_produccion))  # outbound delivery
+            #time.sleep(3)  # wait for 3 seconds before inserting the next table
+            #futures.append(executor.submit(it.insert_warehouse_data, engine, conn, cursor, df_warehouse))  # warehouse
+            #time.sleep(3)  # wait for 3 seconds before inserting the next table
+            #futures.append(executor.submit(it.insert_crias_ordenes_recepcion_data, engine, conn, cursor, df_purchase_orders))  # purchase orders
+            #time.sleep(3)  # wait for 3 seconds before inserting the next table
+            #futures.append(executor.submit(it.insert_transfer_food_farms_data, engine, conn, cursor, df_transfer_food_farms))  # transfer food farms
+            #time.sleep(3)  # wait for 3 seconds before inserting the next table
+            #futures.append(executor.submit(it.insert_transfer_incubator_fattering_data, engine, conn, cursor, df_incubator_fattering))  # incubator fattering
+            #time.sleep(3)  # wait for 3 seconds before inserting the next table
+            #futures.append(executor.submit(it.insert_ordenes_salida_cria_produccion, engine, conn, cursor, df_ordenes_salida_cria_produccion))  # outbound delivery
+            time.sleep(3)
+            futures.append(executor.submit(it.insert_ordenes_salida_produccion_aves, engine, conn, cursor, df_salidas_produccion_aves))
             # Process the results as they complete
             for future in as_completed(futures):
                 try:
@@ -284,7 +288,7 @@ if __name__ == "__main__":
     # Run the main function immediately when the container starts
     job()
 
-    # Schedule the job to run at specific times
+    # # Schedule the job to run at specific times
     print("Scheduling job...")
     schedule.every().day.at("06:00").do(job)
     schedule.every().day.at("10:00").do(job)

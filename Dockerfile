@@ -31,6 +31,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy rest of the project
 COPY . .
 
-# Run the application
-CMD ["python", "app.py"]
+# Install supervisor
+RUN pip install supervisor
+
+# Run the application using supervisor
+CMD ["supervisord", "-c", "/app/supervisord.conf"]
 

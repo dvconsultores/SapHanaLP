@@ -20,9 +20,9 @@ services:
       - ./vpn/ipsec.secrets:/etc/ipsec.secrets
       - ./vpn/xl2tpd.conf:/etc/xl2tpd/xl2tpd.conf
       - ./vpn/options.l2tpd.client:/etc/ppp/options.l2tpd.client
-      - ./entrypoint.sh:/entrypoint.sh
+      - ./supervisord.conf:/etc/supervisor/conf.d/supervisord.conf
     working_dir: /app
-    entrypoint: ["/bin/sh", "-c", "/entrypoint.sh && tail -f /dev/null"]
+    entrypoint: ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
     restart: unless-stopped
     logging:
       driver: "json-file"

@@ -1,78 +1,86 @@
-from zeep import Client
-from zeep.transports import Transport
 from requests import Session
 from requests.auth import HTTPBasicAuth
 import urllib3
-import requests
 from dotenv import load_dotenv
 import os
+from xml.etree import ElementTree as ET
 
+# Load environment variables
 load_dotenv()
 
 # Suppress warnings about unverified HTTPS requests
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-class NoRedirectSession(Session):
-    """Custom session class to detect and prevent redirects."""
-    def request(self, method, url, **kwargs):
-        # Block redirects explicitly
-        kwargs['allow_redirects'] = False
-        response = super().request(method, url, **kwargs)
-        # Check for redirects and halt execution
-        if response.is_redirect:
-            raise requests.exceptions.RequestException(
-                f"Redirect detected to {response.headers.get('Location')}."
-            )
-        return response
-
-
-# Define WSDL and connection settings
-wsdl_url = os.getenv('WSDL_URL')
-
-# Authentication setup
+# Set endpoint and authentication
+endpoint = "https://vhemsds4ci.sap.liderpollo.com:44300/vhemsws1wd01"
 username = os.getenv('SAP_USER')
 password = os.getenv('SAP_PASSWORD')
 
-# Create a custom session with authentication
-session = NoRedirectSession()
+# Session setup
+session = Session()
 session.auth = HTTPBasicAuth(username, password)
-session.verify = False  # Disable SSL certificate verification
+session.verify = False  # WARNING: Only use in test/dev environments!
+session.headers.update({
+    'Content-Type': 'text/xml;charset=UTF-8',
+    'SOAPAction': 'urn:sap-com:document:sap:soap:functions:mc-style:ZwsTasaMortalidad'
+})
 
-# Transport setup with session
-transport = Transport(session=session)
+def create_soap_envelope(params):
+    """Create SOAP envelope with parameters"""
+    envelope = f"""<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                  xmlns:urn="urn:sap-com:document:sap:soap:functions:mc-style">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <urn:ZwsTasaMortalidad>
+         <IBudat>{params['IBudat']}</IBudat>
+         <ICharg>{params['ICharg']}</ICharg>
+         <IErfmg>{params['IErfmg']}</IErfmg>
+         <ILgort>{params['ILgort']}</ILgort>
+         <IMatnr>{params['IMatnr']}</IMatnr>
+         <IMblnr>{params['IMblnr']}</IMblnr>
+         <IProceso>{params['IProceso']}</IProceso>
+         <IWerks>{params['IWerks']}</IWerks>
+      </urn:ZwsTasaMortalidad>
+   </soapenv:Body>
+</soapenv:Envelope>"""
+    return envelope
 
-# Debugging redirects
-try:
-    response = session.get(wsdl_url)
-    if response.status_code == 200:
-        print("WSDL fetched successfully.")
-    else:
-        print(f"Failed to fetch WSDL: {response.status_code} {response.reason}")
-except Exception as e:
-    print(f"Error fetching WSDL: {e}")
-    exit()
+def call_sap_service(params):
+    """Call the SAP SOAP service with the given parameters."""
+    try:
+        # Create and send SOAP request
+        print(f"Attempting SOAP call to: {endpoint}")
+        soap_envelope = create_soap_envelope(params)
+        response = session.post(endpoint, data=soap_envelope)
+        response.raise_for_status()
 
-try:
-    # Create SOAP client
-    client = Client(wsdl=wsdl_url, transport=transport)
+        # Parse and return response
+        root = ET.fromstring(response.content)
+        response_data = {}
+        for elem in root.iter():
+            if elem.text and elem.text.strip():
+                response_data[elem.tag] = elem.text
+        return {"status": "success", "data": response_data}
 
-    # Define parameters
-    params = {
-        "ICharg": "12345",  # Lote (char10)
-        "IBudat": "2024-11-26",  # Fecha de contabilización (date10)
-        "IErfmg": 1000,  # Cantidad (quantum13.3)
-        "IWerks": "G123",  # Granjas Id (char4)
-        "ILgort": "GAL1",  # Galpón (char4) - Note: max 4 chars!
-        "IMblnr": "ORD456",  # Orden de recepción (char10)
-        "IMatnr": "Mat789",  # Material (char40)
-        "IProceso": "Cria",  # Proceso (char10)
-    }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
-    # Call the service method
-    response = client.service.ZwsTasaMortalidad(**params)
-    print("Response from SAP:", response)
-except requests.exceptions.RequestException as e:
-    print(f"Redirect or network error: {e}")
-except Exception as e:
-    print(f"An error occurred: {e}")
+# SAP SOAP parameters
+params = {
+    "IBudat": "2023-08-08",
+    "ICharg": "08082023M2",
+    "IErfmg": 105,
+    "ILgort": "1006",
+    "IMatnr": "125001",
+    "IMblnr": "5000112373",
+    "IProceso": "C",
+    "IWerks": "5000",
+}
+
+# # Example usage
+# if __name__ == "__main__":
+#     # Example usage
+#     response = call_sap_service(params)
+#     print(response)

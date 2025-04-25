@@ -131,4 +131,35 @@ def insert_ordenes_salida_cria_produccion(engine, conn, cursor, df_ordenes_salid
         print("Reading from temp_incubadoras_engorde...")
         operations.store_ordenes_salida_cria_produccion(conn, cursor, df_ordenes_salida_cria_produccion_temp) if len(df_ordenes_salida_cria_produccion_temp) > 0 else print("No data to insert.")
     else:
-        print("No data to transfer.")                         
+        print("No data to transfer.")
+
+
+# Function to perform trasnfer order from production birds
+def insert_ordenes_salida_produccion_aves(engine, conn, cursor, df_ordenes_salida_produccion_aves):
+    if df_ordenes_salida_produccion_aves is not None and not df_ordenes_salida_produccion_aves.empty:
+        df_ordenes_salida_produccion_aves.to_sql('temp_ordenes_salida_produccion_aves', engine, if_exists='replace', index=False)
+        print("Temporary table temp_ordenes_produccion_aves created")
+        time.sleep(3)  # wait for 3 seconds before reading the temp table
+        
+        # Query from the temporary food transfer
+        df_ordenes_salida_produccion_aves_temp = query_postgres(conn, cursor, qh.temp_query_ordenes_salida_produccion_aves)
+        # print(df_ordenes_salida_cria_produccion_temp)
+        print("Reading from temp_incubadoras_engorde...")
+        operations.store_ordenes_salida_produccion_aves(conn, cursor, df_ordenes_salida_produccion_aves_temp) if len(df_ordenes_salida_produccion_aves_temp) > 0 else print("No data to insert.")
+    else:
+        print("No data to transfer.")  
+
+# Function to perform trasnfer order from production birds
+# def insert_ordenes_salida_produccion_huevos(engine, conn, cursor, df_ordenes_salida_produccion_huevos):
+#     if df_ordenes_salida_produccion_huevos is not None and not df_ordenes_salida_produccion_huevos.empty:
+#         df_ordenes_salida_produccion_huevos.to_sql('temp_ordenes_salida_produccion_huevos', engine, if_exists='replace', index=False)
+#         print("Temporary table temp_ordenes_produccion_huevos created")
+#         time.sleep(3)  # wait for 3 seconds before reading the temp table
+        
+#         # Query from the temporary food transfer
+#         df_ordenes_salida_produccion_huevos_temp = query_postgres(conn, cursor, qh.temp_query_ordenes_salida_produccion_huevos)
+#         # print(df_ordenes_salida_cria_produccion_temp)
+#         print("Reading from temp_incubadoras_engorde...")
+#         operations.store_ordenes_salida_produccion_huevos(conn, cursor, df_ordenes_salida_produccion_huevos_temp) if len(df_ordenes_salida_produccion_huevos_temp) > 0 else print("No data to insert.")
+#     else:
+#         print("No data to transfer.")                

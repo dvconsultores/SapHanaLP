@@ -236,6 +236,87 @@ WHERE d."granjaIdId" = (select f.id
 						 INNER JOIN granjas f ON e."granjaDestinoIdId" = f.id_sap  )
 """    
 
+query_ordenes_salida_produccion_aves = """
+SELECT  
+    AFPO.AUFNR AS "orden",
+    AFPO.MATNR AS "material",
+    AFPO.PSMNG AS "cantidad",
+    AFPO.DGLTP AS "fecha",
+    AFPO.CHARG AS "lote",
+    AFPO.PWERK AS "granjaOrigenIdId",
+    AFPO.DWERK AS "granjaDestinoIdId",
+    AFPO.LGORT AS "almacen",
+    '000000000000' AS "transporteIdId"
+FROM SAPHANADB.AFPO
+--WHERE  AFPO.AUFNR = '700100000055'
+WHERE AFPO.MATNR IN ('000000000000110002','000000000000110003')
+AND AFPO.DGLTP > '20241001'
+"""
+
+temp_query_ordenes_salida_produccion_aves = """
+SELECT 
+    a.orden as id_sap,
+    a.orden,
+    a.cantidad,
+	'ACTIVO' as status,
+	now(),
+    b.id as granjaOrigenIdId,
+    '1' as granjaDestinoIdId,
+   '3730' as transporte,
+	d.id as galpon
+FROM 
+    temp_ordenes_salida_produccion_aves a
+INNER JOIN 
+    granjas b ON a."granjaOrigenIdId" = b.id_sap
+INNER JOIN 
+    granjas c ON a."granjaDestinoIdId" = c.id_sap
+INNER JOIN 
+    galpones d ON a.almacen = d.id_sap
+WHERE d."granjaIdId" in (select distinct f.id 
+                         from temp_ordenes_salida_produccion_aves e 
+						 INNER JOIN granjas f ON e."granjaDestinoIdId" = f.id_sap  )
+"""             
+
+# query_ordenes_salida_produccion_huevos = """
+# SELECT  
+#     AFPO.AUFNR AS "orden",
+#     AFPO.MATNR AS "material",
+#     AFPO.PSMNG AS "cantidad",
+#     AFPO.DGLTP AS "fecha",
+#     AFPO.CHARG AS "lote",
+#     AFPO.PWERK AS "granjaOrigenIdId",
+#     AFPO.DWERK AS "granjaDestinoIdId",
+#     AFPO.LGORT AS "almacen",
+#     '000000000000' AS "transporteIdId"
+# FROM SAPHANADB.AFPO
+# --WHERE  AFPO.AUFNR = '700100000055'
+# WHERE AFPO.MATNR IN ('000000000000115000')
+# AND AFPO.DGLTP > '20241001'
+# """
+
+# temp_query_ordenes_salida_produccion_aves = """
+# SELECT 
+#     a.lote,
+#     a.cantidad,
+# 	'ACTIVO' as status,
+# 	now(),
+#     b.id as granjaOrigenIdId,
+#     '1' as granjaDestinoIdId,
+#    '3730' as transporte,
+# 	d.id as galpon
+# FROM 
+#     temp_ordenes_salida_produccion_aves a
+# INNER JOIN 
+#     granjas b ON a."granjaOrigenIdId" = b.id_sap
+# INNER JOIN 
+#     granjas c ON a."granjaDestinoIdId" = c.id_sap
+# INNER JOIN 
+#     galpones d ON a.almacen = d.id_sap
+# WHERE d."granjaIdId" = (select f.id 
+#                          from temp_ordenes_salida_cria_produccion e 
+# 						 INNER JOIN granjas f ON e."granjaDestinoIdId" = f.id_sap  )
+# """     
+
 ##########################################################################################################################
 ##########################################################################################################################
 ##########################################################################################################################
