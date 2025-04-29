@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     netcat-openbsd \
     supervisor \
+    network-manager \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -32,6 +33,10 @@ COPY . .
 
 # Copy the supervisord configuration file
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Copy entrypoint script
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 # Expose the FastAPI port
 EXPOSE 8000
