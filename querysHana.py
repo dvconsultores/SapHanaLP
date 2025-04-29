@@ -156,38 +156,39 @@ WHERE a."WERKS" in (SELECT "id_sap" FROM granjas);
 
 # Purchase Orders in Process
 query_trasnfer_incubator_fattening = """
-SELECT EKPO1.EBELN AS "orden_compra"
-    , EKPO1.UNIQUEID AS "id_sap"
-    , '1' AS "lote"
-    , '3000' AS "incubadora"
-    , EKPO1.WERKS AS "granjaIdId"
-    , EKPO1.MENGE AS "cantidad" -- Replace NULL with 0 for cant_machos
-    , EKPO1.AEDAT
-    , EKPO1.EBELN 
-    , '000000000000' AS "transporteIdId"
-FROM SAPHANADB.EKPO EKPO1
- INNER JOIN SAPHANADB.EKKO ON EKPO1.EBELN = EKKO.EBELN -- Join with EKKO to get LIFNR
-WHERE EKPO1.AEDAT >= '20240301'
---AND EKPO1.EBELN = '4500015040'
---AND EKPO1.MATNR = '000000000000120000' -- Material number
+SELECT 
+    MATDOC.AUFNR AS "orden",
+    MATDOC.WERKS AS "granjaOrigenIdId",
+    trim(MATDOC.UMWRK) AS "granjaDestinoIdId",
+    MATDOC.LGORT AS "almacen",
+    MATDOC.BUDAT AS "fecha",
+    MATDOC.ERFMG AS "cantidad",
+    '000000000000' AS "transporteIdId",
+    MATDOC.MATNR 
+FROM SAPHANADB.MATDOC
+WHERE  MATDOC.MATNR IN ('000000000000120000', '000000000000120005')
+--and MATDOC.AUFNR = '700300000256'
+AND MATDOC.BUDAT >= '20250312'
+AND trim(MATDOC.UMWRK) NOT IN ('2500')
+AND SUBSTRING(MATDOC.AUFNR,1,1) = '7'
+AND MATDOC.WERKS = '3000'
+ORDER BY MATDOC.BUDAT DESC
 """
 
 
 # Purchase Orders in Process Temporary table
 query_trasnfer_incubator_fattening_temp = """
 SELECT 
-    trim(a.id_sap) id_sap,
-	a.orden_compra,
-	a.cantidad,
-	b.id,
-    g.id,
-	c.id
+    a.orden as id_sap,
+    a.orden,
+    a.cantidad,
+	'ACTIVO' as status,
+	now(),
+    b.id as granjaOrigenIdId
 FROM 
-    temp_incubadoras_engorde a
+    temp_ordenes_salida_incubadoras_pollitos_bb a
 INNER JOIN 
-    granjas g ON a."granjaIdId" = g.id_sap
-INNER JOIN incubadoras b on a."incubadora" = b."id_sap"
-INNER JOIN transportes c on a."transporteIdId" = c."id_sap"
+    incubadoras b ON a."granjaOrigenIdId" = b.id_sap
 """
 
 # Outbound Delivery
@@ -236,21 +237,25 @@ WHERE d."granjaIdId" = (select f.id
 						 INNER JOIN granjas f ON e."granjaDestinoIdId" = f.id_sap  )
 """    
 
+# Salida de Gallinas de producción a beneficio
+# Menu App, Reproductora Etapa Producción
+# Opción salida de Aves
 query_ordenes_salida_produccion_aves = """
-SELECT  
-    AFPO.AUFNR AS "orden",
-    AFPO.MATNR AS "material",
-    AFPO.PSMNG AS "cantidad",
-    AFPO.DGLTP AS "fecha",
-    AFPO.CHARG AS "lote",
-    AFPO.PWERK AS "granjaOrigenIdId",
-    AFPO.DWERK AS "granjaDestinoIdId",
-    AFPO.LGORT AS "almacen",
-    '000000000000' AS "transporteIdId"
-FROM SAPHANADB.AFPO
---WHERE  AFPO.AUFNR = '700100000055'
-WHERE AFPO.MATNR IN ('000000000000110002','000000000000110003')
-AND AFPO.DGLTP > '20241001'
+SELECT 
+    MATDOC.AUFNR AS "orden",
+    MATDOC.WERKS AS "granjaOrigenIdId",
+    trim(MATDOC.UMWRK) AS "granjaDestinoIdId",
+    MATDOC.LGORT AS "almacen",
+    MATDOC.BUDAT AS "fecha",
+    MATDOC.ERFMG AS "cantidad",
+    '3730' AS "transporteIdId"
+FROM SAPHANADB.MATDOC
+WHERE  MATDOC.MATNR IN ('000000000000110002')
+--AND MATDOC.AUFNR = '700200000021'
+AND MATDOC.BUDAT >= '20250312'
+AND trim(MATDOC.UMWRK) NOT IN ('2500')
+AND SUBSTRING(MATDOC.AUFNR,1,1) = '7'
+ORDER BY MATDOC.BUDAT DESC
 """
 
 temp_query_ordenes_salida_produccion_aves = """
@@ -263,19 +268,13 @@ SELECT
     b.id as granjaOrigenIdId,
     '1' as granjaDestinoIdId,
    '3730' as transporte,
-	d.id as galpon
+   '1001' as galpon
 FROM 
     temp_ordenes_salida_produccion_aves a
 INNER JOIN 
     granjas b ON a."granjaOrigenIdId" = b.id_sap
-INNER JOIN 
-    granjas c ON a."granjaDestinoIdId" = c.id_sap
-INNER JOIN 
-    galpones d ON a.almacen = d.id_sap
-WHERE d."granjaIdId" in (select distinct f.id 
-                         from temp_ordenes_salida_produccion_aves e 
-						 INNER JOIN granjas f ON e."granjaDestinoIdId" = f.id_sap  )
-"""             
+"""       
+
 
 # query_ordenes_salida_produccion_huevos = """
 # SELECT  

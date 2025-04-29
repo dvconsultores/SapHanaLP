@@ -369,7 +369,7 @@ def store_transferencias_alimento(conn, cursor, df, batch_size=500, max_workers=
 # Function to store transfer incubator fattering
 def store_incubator_fattering_orders(conn, cursor, df, batch_size=500, max_workers=32):
     # Convert the DataFrame rows into a list of tuples for easy insertion
-    data = [(record[0], record[1], float(record[2] or 0), int(record[3] or 0),
+    data = [(record[0], record[1], float(record[2] or 0), record[3],
             record[4], record[5]) 
             for record in df.itertuples(index=False, name=None)]  # Access fields by index    
     try:
@@ -422,7 +422,7 @@ def store_incubator_fattering_orders(conn, cursor, df, batch_size=500, max_worke
         # Function to perform batch insert
         def batch_insert(batch):
             sql_insert = """
-                INSERT INTO incubadora_ordenes_salida_pollitos (id_sap, orden, cant_pollitos, "incubadoraOrigenIdId", "granjaDestinoIdId", "transporteIdId")
+                INSERT INTO incubadora_ordenes_salida_pollitos (id_sap, orden, cant_pollitos, status, creation_date,  "incubadoraOrigenIdId")
                 VALUES (%s, %s, %s, %s, %s, %s);
             """
             if not batch:  # Check if batch is empty before attempting to insert
